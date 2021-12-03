@@ -17,7 +17,7 @@ namespace drawing
 	LPD3DXFONT CreateASingleFont(IDirect3DDevice9* device, const char* fontFaceName)
 	{
 		LPD3DXFONT font = nullptr;
-		D3DXCreateFontA(device, 32, 0, FW_BOLD, 0, FALSE, DEFAULT_CHARSET, OUT_DEFAULT_PRECIS,
+		D3DXCreateFontA(device, 16, 0, FW_BOLD, 0, FALSE, DEFAULT_CHARSET, OUT_DEFAULT_PRECIS,
 			DEFAULT_QUALITY, DEFAULT_PITCH | FW_DONTCARE, fontFaceName, &font);
 		return font;
 	}

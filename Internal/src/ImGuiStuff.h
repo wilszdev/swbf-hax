@@ -24,7 +24,7 @@ static void ShutdownImGui()
 	ImGui_ImplWin32_Shutdown();
 	ImGui::DestroyContext();
 }
-static void PollMouseInputForImGui()
+static void PollMouseButtonsForImGui()
 {
 	for (int i = 0; i < 5; i++) ImGui::GetIO().MouseDown[i] = false;
 
@@ -55,7 +55,7 @@ static END_SCENE(hkEndScene2)
 		d3dDevice = device;
 	}
 
-	PollMouseInputForImGui();
+	PollMouseButtonsForImGui();
 
 	static bool toggleKeyWasDownLastFrame = false;
 	bool toggleKeyDown = GetKeyState(VK_HOME) & 0x8000;

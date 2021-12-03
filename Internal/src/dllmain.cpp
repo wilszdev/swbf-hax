@@ -6,69 +6,6 @@
 #include <cstdio>
 
 #include "swbf-reclass.h"
-//BOOL WINAPI InjectedThread(HMODULE module)
-//{
-//	BOOL createdConsole = FALSE;
-//	FILE* f = nullptr;
-//	if ((createdConsole = AllocConsole()) == TRUE)
-//	{
-//		freopen_s(&f, "CONOUT$", "w", stdout);
-//	}
-//
-//	printf("dll injected at 0x%p\n", module);
-//	puts("press INS to terminate this thread (without closing the process)");
-//
-//	uintptr_t exeBase = (uintptr_t)GetModuleHandleA(NULL);
-//#define spawnManager (*((SpawnManager**)(exeBase + 0x62EA50)))
-//#define profileName ((wchar_t*)(exeBase + 0x5AB0D2))
-//#define helpfulData ((*(TheStartOfSomeRandomDataThing**)(exeBase + 0x01D95D24)))
-//
-//	bool hasSaidHello = false;
-//	while (!GetAsyncKeyState(VK_INSERT))
-//	{
-//		if (!hasSaidHello &&
-//			profileName && *profileName)
-//		{
-//			wprintf(L"hello there %s\n", profileName);
-//			hasSaidHello = true;
-//		}
-//
-//		if (GetAsyncKeyState(VK_NUMPAD1))
-//			if (spawnManager && spawnManager->playerCharacter &&
-//				spawnManager->playerCharacter->currentClass &&
-//				spawnManager->playerCharacter->currentClass->className &&
-//				spawnManager->playerCharacter->currentTeam &&
-//				spawnManager->playerCharacter->currentTeam->teamName)
-//			{
-//				wprintf(L"you are on team %s, playing as %s\n",
-//					spawnManager->playerCharacter->currentTeam->teamName,
-//					spawnManager->playerCharacter->currentClass->className);
-//			}
-//
-//#define playerDataYay helpfulData->localPlayerAimer.classWithPlayerDataYay
-//#define entitySoldier helpfulData->localPlayerAimer.classWithPlayerDataYay->currentEntitySoldierInstance
-//
-//		if (GetAsyncKeyState(VK_NUMPAD2))
-//			if (helpfulData && playerDataYay && (void*)playerDataYay != (void*)0x3F800000 && entitySoldier)
-//			{
-//				printf("health: %f\n", entitySoldier->curHealth);
-//			}
-//
-//		if (GetAsyncKeyState(VK_NUMPAD3))
-//			if (helpfulData && playerDataYay && (void*)playerDataYay != (void*)0x3F800000 && entitySoldier)
-//			{
-//				entitySoldier->curHealth += 100.0f;
-//				printf("+100 health (%f)\n", entitySoldier->curHealth);
-//			}
-//
-//		Sleep(50);
-//	}
-//
-//	if (f) fclose(f);
-//	if (createdConsole) FreeConsole();
-//	FreeLibraryAndExitThread(module, 0);
-//	return TRUE;
-//}
 
 #define WHITE D3DCOLOR_ARGB(0xFF, 0xFF, 0xFF, 0xFF)
 #define BLACK D3DCOLOR_ARGB(0xFF, 0x00, 0x00, 0x00)
@@ -80,16 +17,16 @@
 #include "vendor/imgui/imgui_impl_dx9.h"
 #include "vendor/imgui/imgui_impl_win32.h"
 
-static void InitImGui(LPDIRECT3DDEVICE9 device)
+static void InitImGui(LPDIRECT3DDEVICE9 device, HWND window)
 {
 	puts("initialising imgui");
 	ImGui::CreateContext();
 	ImGuiIO& io = ImGui::GetIO(); (void)io;
 	io.MouseDrawCursor = true;
-	//io.ConfigFlags = ImGuiConfigFlags_NoMouseCursorChange;
+	io.ConfigFlags = ImGuiConfigFlags_NoMouseCursorChange;
+	io.ConfigFlags |= ImGuiConfigFlags_NavEnableSetMousePos;
 	ImGui::StyleColorsDark();
-
-	ImGui_ImplWin32_Init(util::GetCurrentProcessWindow());
+	ImGui_ImplWin32_Init(window);
 	ImGui_ImplDX9_Init(device);
 	puts(" completed init.");
 }
@@ -103,7 +40,7 @@ static void ShutdownImGui()
 	puts(" completed shutdown.");
 }
 
-static void PollMouseInputForImGui()
+static void PollMouseButtonsForImGui()
 {
 	for (int i = 0; i < 5; i++) ImGui::GetIO().MouseDown[i] = false;
 
@@ -124,18 +61,21 @@ void hkReset()
 	ImGui_ImplDX9_InvalidateDeviceObjects();
 }
 
+HWND windowHandle = nullptr;
 static bool didShutdown = false;
 void hkEndScene(LPDIRECT3DDEVICE9 device)
 {
+	static uintptr_t exeBase = (uintptr_t)GetModuleHandleA(NULL);
 	if (didShutdown) return;
+
+	if (!windowHandle) windowHandle = util::GetCurrentProcessWindow();
+
 	static bool initialised = false;
 	if (!initialised)
 	{
-		InitImGui(device);
+		InitImGui(device, windowHandle);
 		initialised = true;
 	}
-
-	PollMouseInputForImGui();
 
 	bool isInLoadingScreen = *(bool*)((uintptr_t)GetModuleHandle(NULL) + 0x4EED59);
 	static bool showImGuiMenu = false;
@@ -153,33 +93,107 @@ void hkEndScene(LPDIRECT3DDEVICE9 device)
 
 	drawing::DrawFilledRect(device, 25, 25, 35, 35, WHITE);
 
+#define profileName ((wchar_t*)(exeBase + 0x5AB0D2))
+//#define spawnManager (*((SpawnManager**)(exeBase + 0x62EA50)))
+#define helpfulData ((*(TheStartOfSomeRandomDataThing**)(exeBase + 0x01D95D24)))
+#define playerDataYay (helpfulData->localPlayerAimer.classWithPlayerDataYay)
+#define entitySoldier (helpfulData->localPlayerAimer.classWithPlayerDataYay->currentEntitySoldierInstance)
+
+	static bool lockHealth = false;
+	static float healthValue = 300.0f;
+	static bool infiniteAmmo = false;
+
+	// if the high 2 bits of an address are 0x3F then it's been cleared by game
+	//hopefully
+#define PTR_IS_VALID(ptr) ((ptr) && (((uintptr_t)(ptr) & 0xFF000000) != 0x3F000000))
+
+	if (infiniteAmmo &&
+		PTR_IS_VALID(helpfulData) &&
+		PTR_IS_VALID(helpfulData->localPlayerAimer.currentGun))
+	{
+		helpfulData->localPlayerAimer.currentGun->proportionOfAmmunitionLeftInMag = 1.0;
+		helpfulData->localPlayerAimer.currentGun->weaponHeat = 0.0;
+	}
+
+	if (PTR_IS_VALID(helpfulData) &&
+		PTR_IS_VALID(playerDataYay) &&
+		PTR_IS_VALID(entitySoldier))
+	{
+		if (lockHealth)
+		{
+			entitySoldier->curHealth = healthValue;
+		}
+		else
+		{
+			healthValue = entitySoldier->curHealth;
+		}
+	}
+
 	if (showImGuiMenu)
 	{
+		auto& io = ImGui::GetIO();
+
+		PollMouseButtonsForImGui();
+
+		// use the position of the in game cursor, bc it locks to the window for us and stuff like that.
+		RECT clientRect = { 0 };
+		GetClientRect(windowHandle, &clientRect);
+
+		// for some odd reason, (1024, 624) is the bottom left position for the in-game cursor.
+		// it is independent of resolution or window size.
+		io.MousePos.x = ((float)(*(int*)(exeBase + 0x7027C4))) / 1024.0f * (float)clientRect.right;
+		io.MousePos.y = ((float)(*(int*)(exeBase + 0x7027C8))) / 624.0f * (float)clientRect.bottom;
+		io.WantSetMousePos = true;
+
 		ImGui_ImplDX9_NewFrame();
 		ImGui_ImplWin32_NewFrame();
 		ImGui::NewFrame();
 
-		ImGui::Begin("nice man");
+		ImGui::Begin("lmao, swbf hax");
 
-		uintptr_t exeBase = (uintptr_t)GetModuleHandleA(NULL);
-#define spawnManager (*((SpawnManager**)(exeBase + 0x62EA50)))
-#define profileName ((wchar_t*)(exeBase + 0x5AB0D2))
-#define helpfulData ((*(TheStartOfSomeRandomDataThing**)(exeBase + 0x01D95D24)))
+		//ImGui::Text("setting mouse to be at (%d, %d) in the client area", (int)io.MousePos.x, (int)io.MousePos.y);
 
-#define playerDataYay helpfulData->localPlayerAimer.classWithPlayerDataYay
-#define entitySoldier helpfulData->localPlayerAimer.classWithPlayerDataYay->currentEntitySoldierInstance
-		if (helpfulData && playerDataYay && (void*)playerDataYay != (void*)0x3F800000 && entitySoldier)
+		if (profileName && *profileName)
 		{
-			ImGui::DragFloat("health", &(entitySoldier->curHealth), 100.0f, 0.0f, 5000.0f);
+			char tmpProfileName[32] = { 0 };
+			wcstombs_s(0, tmpProfileName, profileName, 32);
+			ImGui::Text("Hello there, %s.", tmpProfileName);
 		}
 
-		static float value = 6.9f;
-		ImGui::Text("well isnt this just splendid");
-		ImGui::DragFloat("here is a cool value", &value, 0.1f, 0.0f, 10.0f);
+		/*if (PTR_IS_VALID(spawnManager) &&
+			PTR_IS_VALID(spawnManager->playerCharacter) &&
+			PTR_IS_VALID(spawnManager->playerCharacter->currentClass) &&
+			PTR_IS_VALID(spawnManager->playerCharacter->currentClass->className) &&
+			PTR_IS_VALID(spawnManager->playerCharacter->currentTeam) &&
+			PTR_IS_VALID(spawnManager->playerCharacter->currentTeam->teamName))
+		{
+			char tmpTeamName[32] = { 0 };
+			char tmpClassName[32] = { 0 };
+
+			wcstombs_s(0, tmpTeamName, spawnManager->playerCharacter->currentTeam->teamName, 32);
+			wcstombs_s(0, tmpClassName, spawnManager->playerCharacter->currentClass->className, 32);
+			ImGui::Text("you are on team %s, playing as %s\n", tmpTeamName, tmpClassName);
+		}*/
+
+		if (PTR_IS_VALID(helpfulData) &&
+			PTR_IS_VALID(playerDataYay) &&
+			PTR_IS_VALID(entitySoldier))
+		{
+			ImGui::Checkbox("lock health", &lockHealth);
+			if (lockHealth)
+			{
+				ImGui::SliderFloat("health", &healthValue, 0.0f, 5000.0f);
+			}
+			else
+			{
+				ImGui::SliderFloat("health", &(entitySoldier->curHealth), 0.0f, 5000.0f);
+				healthValue = entitySoldier->curHealth;
+			}
+		}
+
+		ImGui::Checkbox("infinite ammo (primary weapon)", &infiniteAmmo);
 
 		ImGui::End();
-
-		ImGui::ShowDemoWindow();
 
 		ImGui::EndFrame();
 		ImGui::Render();
@@ -216,7 +230,7 @@ void hkEndScene(LPDIRECT3DDEVICE9 device)
 
 static void WINAPI InjectedThread(HMODULE module)
 {
-	printf("injected dll at %p", module);
+	printf("injected dll at %p\n===========================\n\n", module);
 	AllocConsole();
 	FILE* f = nullptr;
 	freopen_s(&f, "CONOUT$", "w", stdout);

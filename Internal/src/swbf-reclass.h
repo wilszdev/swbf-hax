@@ -106,7 +106,7 @@ public:
 	char pad_0014[48]; //0x0014
 }; //Size: 0x0044
 
-class Aimer
+struct Aimer
 {
 public:
 	char pad_0000[8]; //0x0000
@@ -128,11 +128,11 @@ public:
 }; //Size: 0x0184
 
 // ptr to this at battlefront.exe + 0x01D95D24
-class TheStartOfSomeRandomDataThing
+struct TheStartOfSomeRandomDataThing
 {
 public:
 	char pad_0000[36]; //0x0000
-	class Aimer localPlayerAimer; //0x0024
+	struct Aimer localPlayerAimer; //0x0024
 	char pad_01A8[28]; //0x01A8
 }; //Size: 0x01C4
 
@@ -149,3 +149,19 @@ public:
 	struct EntitySoldier* currentEntitySoldierInstance; //0x0054
 	char pad_0058[4]; //0x0058
 }; //Size: 0x005C
+
+struct WeaponCannon
+{
+public:
+	char pad_0000[96]; //0x0000
+	struct WeaponCannonClass* weaponCannonclass_instance; //0x0060
+	struct WeaponCannonClass* weaponCannonclass_instance_2; //0x0064 // appears to always be the same addr as previous
+	char pad_0068[4];//struct EntitySoldier* entitySoldier instance - wrong type, sometimes it is other things; //0x0068
+	struct Aimer* TheAimerBelongingToThisWeapon; //0x006C
+	char pad_0070[28]; //0x0070
+	float proportionOfAmmunitionLeftInMag; //0x008C
+	float weaponHeat; //0x0090
+	char pad_0094[56]; //0x0094
+	struct RedModel* Geometry; //0x00CC
+	struct RedModel* GeometryHighRes; //0x00D0
+}; //Size: 0x00D4
