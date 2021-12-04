@@ -9,6 +9,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "LoadLibraryInjector", "Load
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Internal", "Internal\Internal.vcxproj", "{2F9975A3-EBC7-4F28-9BC2-19192210FC37}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "EntityLogger", "EntityLogger\EntityLogger.vcxproj", "{9D17D7F2-3990-4B6F-B011-C209576CB586}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
@@ -41,6 +43,14 @@ Global
 		{2F9975A3-EBC7-4F28-9BC2-19192210FC37}.Release|x64.Build.0 = Release|x64
 		{2F9975A3-EBC7-4F28-9BC2-19192210FC37}.Release|x86.ActiveCfg = Release|Win32
 		{2F9975A3-EBC7-4F28-9BC2-19192210FC37}.Release|x86.Build.0 = Release|Win32
+		{9D17D7F2-3990-4B6F-B011-C209576CB586}.Debug|x64.ActiveCfg = Debug|x64
+		{9D17D7F2-3990-4B6F-B011-C209576CB586}.Debug|x64.Build.0 = Debug|x64
+		{9D17D7F2-3990-4B6F-B011-C209576CB586}.Debug|x86.ActiveCfg = Debug|Win32
+		{9D17D7F2-3990-4B6F-B011-C209576CB586}.Debug|x86.Build.0 = Debug|Win32
+		{9D17D7F2-3990-4B6F-B011-C209576CB586}.Release|x64.ActiveCfg = Release|x64
+		{9D17D7F2-3990-4B6F-B011-C209576CB586}.Release|x64.Build.0 = Release|x64
+		{9D17D7F2-3990-4B6F-B011-C209576CB586}.Release|x86.ActiveCfg = Release|Win32
+		{9D17D7F2-3990-4B6F-B011-C209576CB586}.Release|x86.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
