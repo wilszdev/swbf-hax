@@ -1,5 +1,6 @@
 #define IMGUI_IMPL_WIN32_DISABLE_GAMEPAD
 #include "WindowsLessBloat.h"
+#include "di.h"
 #include "dx.h"
 #include "util.h"
 #include "drawing.hpp"
@@ -40,15 +41,6 @@ static void ShutdownImGui()
 	puts(" completed shutdown.");
 }
 
-static void PollMouseButtonsForImGui()
-{
-	for (int i = 0; i < 5; i++) ImGui::GetIO().MouseDown[i] = false;
-
-	if (GetKeyState(VK_LBUTTON) & 0x8000) ImGui::GetIO().MouseDown[0] = true;
-	if (GetKeyState(VK_RBUTTON) & 0x8000) ImGui::GetIO().MouseDown[1] = true;
-	if (GetKeyState(VK_MBUTTON) & 0x8000) ImGui::GetIO().MouseDown[2] = true;
-}
-
 static LPD3DXFONT font = nullptr;
 
 void hkDirectX_Reset()
@@ -61,40 +53,33 @@ void hkDirectX_Reset()
 	ImGui_ImplDX9_InvalidateDeviceObjects();
 }
 
+static bool showImGuiMenu = false;
 void hkDirectX_EndScene(LPDIRECT3DDEVICE9 device)
 {
 	static HWND windowHandle = nullptr;
 	static bool didShutdown = false;
 	static uintptr_t exeBase = (uintptr_t)GetModuleHandleA(NULL);
-	if (didShutdown) return;
-
-	if (!windowHandle) windowHandle = util::GetCurrentProcessWindow();
-
 	static bool initialised = false;
+
+	if (didShutdown) return;
+	if (!windowHandle) windowHandle = util::GetCurrentProcessWindow();
 	if (!initialised)
 	{
 		InitImGui(device, windowHandle);
 		initialised = true;
 	}
 
-	bool isInLoadingScreen = *(bool*)((uintptr_t)GetModuleHandle(NULL) + 0x4EED59);
-	static bool showImGuiMenu = false;
+	bool isInLoadingScreen = *(bool*)(exeBase + 0x4EED59);
 
 	static bool toggleKeyDownLastFrame = false;
 	bool toggleKeyDownThisFrame = (GetAsyncKeyState(VK_NUMPAD9));
-	if (toggleKeyDownThisFrame && !toggleKeyDownLastFrame)
-	{
-		puts("toggling imgui");
-		showImGuiMenu = !showImGuiMenu;
-	}
+	if (toggleKeyDownThisFrame && !toggleKeyDownLastFrame) showImGuiMenu = !showImGuiMenu;
 
 	if (!font) font = drawing::CreateASingleFont(device, "Arial");
-	drawing::WriteText(font, "press NUMPAD9 for hax", 25, 100, 100, 100, DT_LEFT, RED);
-
-	drawing::DrawFilledRect(device, 25, 25, 35, 35, WHITE);
+	drawing::WriteText(font, "press NUMPAD9 for hax", 25, 25, 100, 100, DT_LEFT, RED);
 
 #define profileName ((wchar_t*)(exeBase + 0x5AB0D2))
-//#define spawnManager (*((SpawnManager**)(exeBase + 0x62EA50)))
+	//#define spawnManager (*((SpawnManager**)(exeBase + 0x62EA50)))
 #define helpfulData ((*(TheStartOfSomeRandomDataThing**)(exeBase + 0x01D95D24)))
 #define playerDataYay (helpfulData->localPlayerAimer.classWithPlayerDataYay)
 #define entitySoldier (helpfulData->localPlayerAimer.classWithPlayerDataYay->currentEntitySoldierInstance)
@@ -132,8 +117,6 @@ void hkDirectX_EndScene(LPDIRECT3DDEVICE9 device)
 	if (showImGuiMenu)
 	{
 		auto& io = ImGui::GetIO();
-
-		PollMouseButtonsForImGui();
 
 		// use the position of the in game cursor, bc it locks to the window for us and stuff like that.
 		RECT clientRect = { 0 };
@@ -217,7 +200,7 @@ void hkDirectX_EndScene(LPDIRECT3DDEVICE9 device)
 		ShutdownImGui();
 		didShutdown = true;
 		dx::RemoveHooks();
-		dx::UnhookDirect3D();
+		di::RemoveHooks();
 		//HMODULE thisLib = GetModuleHandleA("Internal.dll");
 		//if (thisLib && thisLib != INVALID_HANDLE_VALUE)
 		//{
@@ -229,32 +212,40 @@ void hkDirectX_EndScene(LPDIRECT3DDEVICE9 device)
 	}
 }
 
+void hkDirectInput_GetDeviceState(DIMOUSESTATE2* mouseState)
+{
+	if (showImGuiMenu)
+	{
+		// pass mouse clicks to imgui
+		auto& io = ImGui::GetIO();
+		for (int i = 0; i < 5; ++i)
+			io.MouseDown[i] = mouseState->rgbButtons[i];
+		// block mouse inputs for game
+		for (int i = 0; i < 8; ++i)
+			mouseState->rgbButtons[i] = 0;
+	}
+}
+
 static void WINAPI InjectedThread(HMODULE module)
 {
 	printf("injected dll at %p\n===========================\n\n", module);
 	AllocConsole();
 	FILE* f = nullptr;
 	freopen_s(&f, "CONOUT$", "w", stdout);
-	if (dx::CreateHooks(util::GetCurrentProcessWindow()))
+	if (dx::CreateHooks(util::GetCurrentProcessWindow()) && di::CreateHooks())
 	{
 		while (!GetAsyncKeyState(VK_INSERT))
 		{
 			Sleep(10);
 		}
-		//dx::RemoveHooks();
-		//ShutdownImGui();
-		//if (font)
-		//{
-		//	font->Release();
-		//}
 	}
 	else
 	{
-		puts("failed to hook d3d. exiting... (this window will remain open)");
+		puts("failed to create hooks. try injecting again.");
 	}
-
 	Sleep(1000);
 	// release lib
+	puts("uninjecting dll...");
 	FreeLibraryAndExitThread(module, 0);
 }
 
