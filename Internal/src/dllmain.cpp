@@ -51,7 +51,7 @@ static void PollMouseButtonsForImGui()
 
 static LPD3DXFONT font = nullptr;
 
-void hkReset()
+void hkDirectX_Reset()
 {
 	if (font)
 	{
@@ -61,10 +61,10 @@ void hkReset()
 	ImGui_ImplDX9_InvalidateDeviceObjects();
 }
 
-HWND windowHandle = nullptr;
-static bool didShutdown = false;
-void hkEndScene(LPDIRECT3DDEVICE9 device)
+void hkDirectX_EndScene(LPDIRECT3DDEVICE9 device)
 {
+	static HWND windowHandle = nullptr;
+	static bool didShutdown = false;
 	static uintptr_t exeBase = (uintptr_t)GetModuleHandleA(NULL);
 	if (didShutdown) return;
 
@@ -216,6 +216,7 @@ void hkEndScene(LPDIRECT3DDEVICE9 device)
 		}
 		ShutdownImGui();
 		didShutdown = true;
+		dx::RemoveHooks();
 		dx::UnhookDirect3D();
 		//HMODULE thisLib = GetModuleHandleA("Internal.dll");
 		//if (thisLib && thisLib != INVALID_HANDLE_VALUE)
@@ -234,13 +235,13 @@ static void WINAPI InjectedThread(HMODULE module)
 	AllocConsole();
 	FILE* f = nullptr;
 	freopen_s(&f, "CONOUT$", "w", stdout);
-	if (dx::HookDirect3D(util::GetCurrentProcessWindow()))
+	if (dx::CreateHooks(util::GetCurrentProcessWindow()))
 	{
 		while (!GetAsyncKeyState(VK_INSERT))
 		{
 			Sleep(10);
 		}
-		//dx::UnhookDirect3D();
+		//dx::RemoveHooks();
 		//ShutdownImGui();
 		//if (font)
 		//{

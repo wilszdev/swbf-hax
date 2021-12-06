@@ -2,8 +2,8 @@
 #include "hook.h"
 #include <cstdio>
 
-extern void hkEndScene(LPDIRECT3DDEVICE9 device);
-extern void hkReset();
+extern void hkDirectX_EndScene(LPDIRECT3DDEVICE9 device);
+extern void hkDirectX_Reset();
 
 // Reset() is index 16
 // EndScene() is index 42
@@ -19,23 +19,23 @@ namespace dx
 	uint8_t ResetOriginalBytes[RESET_PATCH_BYTECOUNT] = { 0 };
 	Reset_fn* originalReset = nullptr;
 
-	bool HookDirect3D(HWND window)
+	bool CreateHooks(HWND window)
 	{
 		if (!CopyVtable(window))
 			return false;
 
-		printf("Locating D3D methods...\n EndScene is at %p\n Reset is at %p\n DrawIndexedPrimitive is at %p\n",
-			deviceVtable[42], deviceVtable[16], deviceVtable[82]);
+		printf("Locating D3D methods...\n EndScene is at %p\n Reset is at %p\n",
+			deviceVtable[42], deviceVtable[16]);
 		// EndScene is the 43rd entry in the vftable (index 42)
 		memcpy(EndSceneOriginalBytes, deviceVtable[42], END_SCENE_PATCH_BYTECOUNT);
-		originalEndScene = (EndScene_fn*)TrampolineHook(deviceVtable[42], dx::hkEndScene, END_SCENE_PATCH_BYTECOUNT);
+		originalEndScene = (EndScene_fn*)TrampolineHook(deviceVtable[42], dx::hkDirectX_EndScene, END_SCENE_PATCH_BYTECOUNT);
 
 		memcpy(ResetOriginalBytes, deviceVtable[16], RESET_PATCH_BYTECOUNT);
-		originalReset = (Reset_fn*)TrampolineHook(deviceVtable[16], dx::hkReset, RESET_PATCH_BYTECOUNT);
+		originalReset = (Reset_fn*)TrampolineHook(deviceVtable[16], dx::hkDirectX_Reset, RESET_PATCH_BYTECOUNT);
 		return true;
 	}
 
-	void UnhookDirect3D()
+	void RemoveHooks()
 	{
 		puts("unhooking d3d");
 		Patch(deviceVtable[42], EndSceneOriginalBytes, END_SCENE_PATCH_BYTECOUNT);
@@ -83,16 +83,16 @@ namespace dx
 		return true;
 	}
 
-	END_SCENE(hkEndScene)
+	END_SCENE(hkDirectX_EndScene)
 	{
-		::hkEndScene(device);
+		::hkDirectX_EndScene(device);
 		return originalEndScene(device);
 	}
 
-	RESET(hkReset)
+	RESET(hkDirectX_Reset)
 	{
 		// release our resources here
-		::hkReset();
+		::hkDirectX_Reset();
 		return originalReset(device, params);
 	}
 }
