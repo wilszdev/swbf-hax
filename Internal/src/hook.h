@@ -6,6 +6,8 @@ bool Hook(void* src, void* dst, size_t length);
 
 void* TrampolineHook(void* src, void* dst, size_t length);
 
+void* VftableHook(void** vftable, size_t index, void* hookFn);
+
 // wndproc hooks
 #if 0
 #define WND_PROC(name) LRESULT CALLBACK name(HWND window, UINT msg, WPARAM wparam, LPARAM lparam)

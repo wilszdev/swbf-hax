@@ -62,3 +62,10 @@ void* TrampolineHook(void* src, void* dst, size_t length)
 
 	return nullptr;
 }
+
+void* VftableHook(void** vftable, size_t index, void* hookFn)
+{
+	void* original = vftable[index];
+	Patch(&vftable[index], &hookFn, sizeof(void*));
+	return original;
+}
