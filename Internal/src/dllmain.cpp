@@ -18,6 +18,67 @@
 #include "vendor/imgui/imgui_impl_dx9.h"
 #include "vendor/imgui/imgui_impl_win32.h"
 
+struct shellcode_info
+{
+	void* GetModuleHandleA;
+	void* FreeLibary;
+	void* CloseHandle;
+	void* Sleep;
+};
+
+DWORD WINAPI uninject_shellcode(shellcode_info* param)
+{
+	((void(*)(DWORD ms))param->Sleep)(1000);
+	HMODULE module = ((HMODULE(*)(LPCSTR moduleName))param->GetModuleHandleA)("Internal.dll");
+	if (module && module != INVALID_HANDLE_VALUE)
+	{
+		((BOOL(*)(HMODULE m))param->FreeLibary)(module);
+		((BOOL(*)(HANDLE h))param->CloseHandle)(module);
+	}
+	return 0;
+}
+
+static void Uninject()
+{
+	puts("uninjecting dll...");
+	void* memory = VirtualAlloc(0, 0x1000, MEM_RESERVE | MEM_COMMIT, PAGE_EXECUTE_READWRITE);
+	if (!memory)
+	{
+		puts(" failed");
+		return;
+	}
+
+	uint8_t* shellcodeAddress = (uint8_t*)uninject_shellcode;
+
+	// it's a jumptable entry, lets find destination address
+	if (*shellcodeAddress == 0xE9)
+	{
+		int32_t offset = 0;
+		memcpy(&offset, shellcodeAddress + 1, 4);
+		offset += 5; // length of jmp instruction
+		shellcodeAddress += offset;
+	}
+	
+	printf(" shellcode is located at 0x%zx\n", (uintptr_t)shellcodeAddress);
+
+	memcpy(memory, shellcodeAddress, 0x200); // theres no way the function is all that big
+
+	shellcode_info info = { 0 };
+	info.CloseHandle = CloseHandle;
+	info.FreeLibary = FreeLibrary;
+	info.GetModuleHandleA = GetModuleHandleA;
+	info.Sleep = Sleep;
+
+	memcpy((char*)memory + 0x200, &info, sizeof(info));
+
+	printf(" wrote shellcode into memory at 0x%zx\n invoking shellcode...\n", (uintptr_t)memory);
+
+#pragma warning(push)
+#pragma warning(disable : 6387)
+	CloseHandle(CreateThread(0, 0, (LPTHREAD_START_ROUTINE)memory, (char*)memory + 0x200, 0, 0));
+#pragma warning(pop)
+}
+
 static void InitImGui(LPDIRECT3DDEVICE9 device, HWND window)
 {
 	puts("initialising imgui");
@@ -89,7 +150,7 @@ void hkDirectX_EndScene(LPDIRECT3DDEVICE9 device)
 	static bool infiniteAmmo = false;
 
 	// if the high 2 bits of an address are 0x3F then it's been cleared by game
-	//hopefully
+	// hopefully
 #define PTR_IS_VALID(ptr) ((ptr) && (((uintptr_t)(ptr) & 0xFF000000) != 0x3F000000))
 
 	if (infiniteAmmo &&
@@ -201,14 +262,7 @@ void hkDirectX_EndScene(LPDIRECT3DDEVICE9 device)
 		didShutdown = true;
 		dx::RemoveHooks();
 		di::RemoveHooks();
-		//HMODULE thisLib = GetModuleHandleA("Internal.dll");
-		//if (thisLib && thisLib != INVALID_HANDLE_VALUE)
-		//{
-		//	printf("attempting to free hax dll (module base %p)", thisLib);
-		//	FreeLibrary(thisLib);
-		//}
-		//else
-		//	puts(" could not get handle to Internal.dll");
+		Uninject();
 	}
 }
 
@@ -250,21 +304,14 @@ static void WINAPI InjectedThread(HMODULE module)
 	AllocConsole();
 	FILE* f = nullptr;
 	freopen_s(&f, "CONOUT$", "w", stdout);
-	if (dx::CreateHooks(util::GetCurrentProcessWindow()) && di::CreateHooks())
-	{
-		while (!GetAsyncKeyState(VK_INSERT))
-		{
-			Sleep(10);
-		}
-	}
-	else
+
+	bool hooksSuccess = dx::CreateHooks(util::GetCurrentProcessWindow()) && di::CreateHooks();
+
+	if (!hooksSuccess)
 	{
 		puts("failed to create hooks. try injecting again.");
+		FreeLibraryAndExitThread(module, 0);
 	}
-	Sleep(1000);
-	// release lib
-	puts("uninjecting dll...");
-	FreeLibraryAndExitThread(module, 0);
 }
 
 BOOL WINAPI DllMain(HMODULE module, DWORD reason, LPVOID reserved)
