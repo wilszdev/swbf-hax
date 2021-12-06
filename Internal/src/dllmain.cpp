@@ -58,7 +58,7 @@ static void Uninject()
 		offset += 5; // length of jmp instruction
 		shellcodeAddress += offset;
 	}
-	
+
 	printf(" shellcode is located at 0x%zx\n", (uintptr_t)shellcodeAddress);
 
 	memcpy(memory, shellcodeAddress, 0x200); // theres no way the function is all that big
@@ -114,23 +114,31 @@ void hkDirectX_Reset()
 	ImGui_ImplDX9_InvalidateDeviceObjects();
 }
 
+static void ShutdownHax()
+{
+	if (font)
+	{
+		font->Release();
+		font = nullptr;
+	}
+	ShutdownImGui();
+	dx::RemoveHooks();
+	di::RemoveHooks();
+	Uninject();
+}
+
 static bool showImGuiMenu = false;
 static uintptr_t exeBase = 0;
 void hkDirectX_EndScene(LPDIRECT3DDEVICE9 device)
 {
-	static HWND windowHandle = nullptr;
-	static bool didShutdown = false;
 	static bool initialised = false;
+	static HWND windowHandle = util::GetCurrentProcessWindow();
 	if (!exeBase) exeBase = (uintptr_t)GetModuleHandleA(NULL);
-	if (didShutdown) return;
-	if (!windowHandle) windowHandle = util::GetCurrentProcessWindow();
 	if (!initialised)
 	{
 		InitImGui(device, windowHandle);
 		initialised = true;
 	}
-
-	bool isInLoadingScreen = *(bool*)(exeBase + 0x4EED59);
 
 	static bool toggleKeyDownLastFrame = false;
 	bool toggleKeyDownThisFrame = (GetAsyncKeyState(VK_NUMPAD9));
@@ -140,8 +148,10 @@ void hkDirectX_EndScene(LPDIRECT3DDEVICE9 device)
 	drawing::WriteText(font, "press NUMPAD9 for hax", 10, 10, 100, 100, DT_LEFT, RED);
 
 #define profileName ((wchar_t*)(exeBase + 0x5AB0D2))
-	//#define spawnManager (*((SpawnManager**)(exeBase + 0x62EA50)))
-#define helpfulData ((*(TheStartOfSomeRandomDataThing**)(exeBase + 0x01D95D24)))
+#define spawnManagerPtr (((SpawnManager**)(exeBase + 0x62EA50)))
+#define spawnManager (*spawnManagerPtr)
+#define helpfulDataPtr (((TheStartOfSomeRandomDataThing**)(exeBase + 0x01D95D24)))
+#define helpfulData (*helpfulDataPtr)
 #define playerDataYay (helpfulData->localPlayerAimer.classWithPlayerDataYay)
 #define entitySoldier (helpfulData->localPlayerAimer.classWithPlayerDataYay->currentEntitySoldierInstance)
 
@@ -151,9 +161,10 @@ void hkDirectX_EndScene(LPDIRECT3DDEVICE9 device)
 
 	// if the high 2 bits of an address are 0x3F then it's been cleared by game
 	// hopefully
-#define PTR_IS_VALID(ptr) ((ptr) && (((uintptr_t)(ptr) & 0xFF000000) != 0x3F000000))
+#define PTR_IS_VALID(ptr) ((ptr) && (((uintptr_t)(ptr) & 0xFF000000) != 0x3F000000) && (((uintptr_t)(ptr)) != 0x2580E1C) && (((uintptr_t)(ptr)) != 0xF334F334))
 
 	if (infiniteAmmo &&
+		PTR_IS_VALID(helpfulDataPtr) &&
 		PTR_IS_VALID(helpfulData) &&
 		PTR_IS_VALID(helpfulData->localPlayerAimer.currentGun))
 	{
@@ -161,7 +172,8 @@ void hkDirectX_EndScene(LPDIRECT3DDEVICE9 device)
 		helpfulData->localPlayerAimer.currentGun->weaponHeat = 0.0;
 	}
 
-	if (PTR_IS_VALID(helpfulData) &&
+	if (PTR_IS_VALID(helpfulDataPtr) &&
+		PTR_IS_VALID(helpfulData) &&
 		PTR_IS_VALID(playerDataYay) &&
 		PTR_IS_VALID(entitySoldier))
 	{
@@ -174,6 +186,8 @@ void hkDirectX_EndScene(LPDIRECT3DDEVICE9 device)
 			healthValue = entitySoldier->curHealth;
 		}
 	}
+
+	bool shouldShutdownHax = false;
 
 	if (showImGuiMenu)
 	{
@@ -193,18 +207,20 @@ void hkDirectX_EndScene(LPDIRECT3DDEVICE9 device)
 		ImGui_ImplWin32_NewFrame();
 		ImGui::NewFrame();
 
-		ImGui::Begin("lmao, swbf hax");
-
-		//ImGui::Text("setting mouse to be at (%d, %d) in the client area", (int)io.MousePos.x, (int)io.MousePos.y);
-
 		if (profileName && *profileName)
 		{
 			char tmpProfileName[32] = { 0 };
 			wcstombs_s(0, tmpProfileName, profileName, 32);
-			ImGui::Text("Hello there, %s.", tmpProfileName);
+			char title[64] = { 0 };
+			sprintf_s(title, 64, "Hello there, %s!", tmpProfileName);
+			ImGui::Begin(title);
+		}
+		else
+		{
+			ImGui::Begin("Hello there!");
 		}
 
-		/*if (PTR_IS_VALID(spawnManager) &&
+		if (PTR_IS_VALID(spawnManagerPtr) && PTR_IS_VALID(spawnManager) &&
 			PTR_IS_VALID(spawnManager->playerCharacter) &&
 			PTR_IS_VALID(spawnManager->playerCharacter->currentClass) &&
 			PTR_IS_VALID(spawnManager->playerCharacter->currentClass->className) &&
@@ -216,10 +232,11 @@ void hkDirectX_EndScene(LPDIRECT3DDEVICE9 device)
 
 			wcstombs_s(0, tmpTeamName, spawnManager->playerCharacter->currentTeam->teamName, 32);
 			wcstombs_s(0, tmpClassName, spawnManager->playerCharacter->currentClass->className, 32);
-			ImGui::Text("you are on team %s, playing as %s\n", tmpTeamName, tmpClassName);
-		}*/
+			ImGui::Text("team:%s\nclass:%s\n", tmpTeamName, tmpClassName);
+		}
 
-		if (PTR_IS_VALID(helpfulData) &&
+		if (PTR_IS_VALID(helpfulDataPtr) &&
+			PTR_IS_VALID(helpfulData) &&
 			PTR_IS_VALID(playerDataYay) &&
 			PTR_IS_VALID(entitySoldier))
 		{
@@ -235,7 +252,17 @@ void hkDirectX_EndScene(LPDIRECT3DDEVICE9 device)
 			}
 		}
 
-		ImGui::Checkbox("infinite ammo (primary weapon)", &infiniteAmmo);
+		if (PTR_IS_VALID(helpfulDataPtr) &&
+			PTR_IS_VALID(helpfulData) &&
+			PTR_IS_VALID(helpfulData->localPlayerAimer.currentGun))
+		{
+			ImGui::Checkbox("infinite ammo", &infiniteAmmo);
+		}
+
+		if (ImGui::Button("Uninject hax dll"))
+		{
+			shouldShutdownHax = true;
+		}
 
 		ImGui::End();
 
@@ -244,25 +271,10 @@ void hkDirectX_EndScene(LPDIRECT3DDEVICE9 device)
 		ImGui_ImplDX9_RenderDrawData(ImGui::GetDrawData());
 	}
 
-	if (isInLoadingScreen)
-	{
-		drawing::DrawFilledRect(device, 100, 25, 25, 25, GREEN);
-	}
-
 	toggleKeyDownLastFrame = toggleKeyDownThisFrame;
-	if (GetAsyncKeyState(VK_INSERT))
+	if (shouldShutdownHax || GetAsyncKeyState(VK_INSERT))
 	{
-		puts("manz pushed insert key");
-		if (font)
-		{
-			font->Release();
-			font = nullptr;
-		}
-		ShutdownImGui();
-		didShutdown = true;
-		dx::RemoveHooks();
-		di::RemoveHooks();
-		Uninject();
+		ShutdownHax();
 	}
 }
 
