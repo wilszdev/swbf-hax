@@ -54,13 +54,13 @@ void hkDirectX_Reset()
 }
 
 static bool showImGuiMenu = false;
+static uintptr_t exeBase = 0;
 void hkDirectX_EndScene(LPDIRECT3DDEVICE9 device)
 {
 	static HWND windowHandle = nullptr;
 	static bool didShutdown = false;
-	static uintptr_t exeBase = (uintptr_t)GetModuleHandleA(NULL);
 	static bool initialised = false;
-
+	if (!exeBase) exeBase = (uintptr_t)GetModuleHandleA(NULL);
 	if (didShutdown) return;
 	if (!windowHandle) windowHandle = util::GetCurrentProcessWindow();
 	if (!initialised)
@@ -76,7 +76,7 @@ void hkDirectX_EndScene(LPDIRECT3DDEVICE9 device)
 	if (toggleKeyDownThisFrame && !toggleKeyDownLastFrame) showImGuiMenu = !showImGuiMenu;
 
 	if (!font) font = drawing::CreateASingleFont(device, "Arial");
-	drawing::WriteText(font, "press NUMPAD9 for hax", 25, 25, 100, 100, DT_LEFT, RED);
+	drawing::WriteText(font, "press NUMPAD9 for hax", 10, 10, 100, 100, DT_LEFT, RED);
 
 #define profileName ((wchar_t*)(exeBase + 0x5AB0D2))
 	//#define spawnManager (*((SpawnManager**)(exeBase + 0x62EA50)))
@@ -216,13 +216,31 @@ void hkDirectInput_GetDeviceState(DIMOUSESTATE2* mouseState)
 {
 	if (showImGuiMenu)
 	{
+		if (!exeBase) exeBase = (uintptr_t)GetModuleHandleA(NULL);
+
 		// pass mouse clicks to imgui
 		auto& io = ImGui::GetIO();
 		for (int i = 0; i < 5; ++i)
 			io.MouseDown[i] = mouseState->rgbButtons[i];
+
+		// update in-game mouse cursor ourselves
+		int* cursorX = (int*)(exeBase + 0x7027C4);
+		int* cursorY = (int*)(exeBase + 0x7027C8);
+
+		*cursorX += mouseState->lX;
+		*cursorY += mouseState->lY;
+
+		if (*cursorX < 0) *cursorX = 0;
+		if (*cursorY < 0) *cursorY = 0;
+		if (*cursorX > 1024) *cursorX = 1024;
+		if (*cursorY > 624) *cursorX = 624;
+
 		// block mouse inputs for game
 		for (int i = 0; i < 8; ++i)
 			mouseState->rgbButtons[i] = 0;
+		mouseState->lX = 0;
+		mouseState->lY = 0;
+		mouseState->lZ = 0;
 	}
 }
 
