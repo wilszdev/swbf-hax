@@ -62,7 +62,8 @@ public:
 	struct EntitySoldierClass* currentClass; //0x00AC
 	struct CommandPost* spawnCommandPost; //0x00B0
 	struct EntitySoldier* currentSoldierMan; //0x00B4
-	char pad_00B8[48]; //0x00B8
+	void* ptrToControllingThing;
+	char pad_00BC[44]; //0x00BC
 }; //Size: 0x00E8
 
 struct Team

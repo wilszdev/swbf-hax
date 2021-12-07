@@ -161,9 +161,14 @@ void hkDirectX_EndScene(LPDIRECT3DDEVICE9 device)
 
 	// if the high 2 bits of an address are 0x3F then it's been cleared by game
 	// hopefully
-#define PTR_IS_VALID(ptr) ((ptr) && (((uintptr_t)(ptr) & 0xFF000000) != 0x3F000000) && (((uintptr_t)(ptr)) != 0x2580E1C) && (((uintptr_t)(ptr)) != 0xF334F334))
+#define PTR_IS_VALID(ptr) ((ptr) && (((uintptr_t)(ptr) & 0xFF000000) != 0x3F000000) && (((uintptr_t)(ptr)) != 0x2580E1C) && (((uintptr_t)(ptr)) != 0xF334F334) && (((uintptr_t)(ptr)) >= 0x1000))
 
 	if (infiniteAmmo &&
+		PTR_IS_VALID(spawnManagerPtr) &&
+		PTR_IS_VALID(spawnManager) &&
+		PTR_IS_VALID(spawnManager->playerCharacter) &&
+		!PTR_IS_VALID(spawnManager->playerCharacter->ptrToControllingThing) &&
+
 		PTR_IS_VALID(helpfulDataPtr) &&
 		PTR_IS_VALID(helpfulData) &&
 		PTR_IS_VALID(helpfulData->localPlayerAimer.currentGun))
@@ -172,7 +177,12 @@ void hkDirectX_EndScene(LPDIRECT3DDEVICE9 device)
 		helpfulData->localPlayerAimer.currentGun->weaponHeat = 0.0;
 	}
 
-	if (PTR_IS_VALID(helpfulDataPtr) &&
+	if (PTR_IS_VALID(spawnManagerPtr) &&
+		PTR_IS_VALID(spawnManager) &&
+		PTR_IS_VALID(spawnManager->playerCharacter) &&
+		!PTR_IS_VALID(spawnManager->playerCharacter->ptrToControllingThing) && 
+
+		PTR_IS_VALID(helpfulDataPtr) &&
 		PTR_IS_VALID(helpfulData) &&
 		PTR_IS_VALID(playerDataYay) &&
 		PTR_IS_VALID(entitySoldier))
@@ -235,7 +245,12 @@ void hkDirectX_EndScene(LPDIRECT3DDEVICE9 device)
 			ImGui::Text("team:%s\nclass:%s\n", tmpTeamName, tmpClassName);
 		}
 
-		if (PTR_IS_VALID(helpfulDataPtr) &&
+		if (PTR_IS_VALID(spawnManagerPtr) &&
+			PTR_IS_VALID(spawnManager) &&
+			PTR_IS_VALID(spawnManager->playerCharacter) &&
+			!PTR_IS_VALID(spawnManager->playerCharacter->ptrToControllingThing) &&
+
+			PTR_IS_VALID(helpfulDataPtr) &&
 			PTR_IS_VALID(helpfulData) &&
 			PTR_IS_VALID(playerDataYay) &&
 			PTR_IS_VALID(entitySoldier))
@@ -252,7 +267,12 @@ void hkDirectX_EndScene(LPDIRECT3DDEVICE9 device)
 			}
 		}
 
-		if (PTR_IS_VALID(helpfulDataPtr) &&
+		if (PTR_IS_VALID(spawnManagerPtr) &&
+			PTR_IS_VALID(spawnManager) &&
+			PTR_IS_VALID(spawnManager->playerCharacter) &&
+			!PTR_IS_VALID(spawnManager->playerCharacter->ptrToControllingThing) && 
+
+			PTR_IS_VALID(helpfulDataPtr) &&
 			PTR_IS_VALID(helpfulData) &&
 			PTR_IS_VALID(helpfulData->localPlayerAimer.currentGun))
 		{
