@@ -279,6 +279,25 @@ void hkDirectX_EndScene(LPDIRECT3DDEVICE9 device)
 			ImGui::Checkbox("infinite ammo", &infiniteAmmo);
 		}
 
+		// instant win by setting remaining units of other team to zero
+		if (PTR_IS_VALID(spawnManagerPtr) &&
+			PTR_IS_VALID(spawnManager) &&
+			PTR_IS_VALID(spawnManager->playerCharacter) &&
+			PTR_IS_VALID(spawnManager->playerCharacter->currentTeam) &&
+			ImGui::Button("instant win"))
+		{
+			int index = spawnManager->playerCharacter->currentTeam->indexInTeamsArray;
+
+			int targetIndex = -1;
+			if (index == 1) targetIndex = 2;
+			else if (index == 2) targetIndex = 1;
+
+			if (targetIndex != -1)
+			{
+				spawnManager->Teams[targetIndex]->remainingUnits = 0;
+			}
+		}
+
 		if (ImGui::Button("Uninject hax dll"))
 		{
 			shouldShutdownHax = true;
