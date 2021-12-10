@@ -8,12 +8,6 @@
 
 #include "swbf-reclass.h"
 
-#define WHITE D3DCOLOR_ARGB(0xFF, 0xFF, 0xFF, 0xFF)
-#define BLACK D3DCOLOR_ARGB(0xFF, 0x00, 0x00, 0x00)
-#define RED   D3DCOLOR_ARGB(0xFF, 0xFF, 0x00, 0x00)
-#define GREEN D3DCOLOR_ARGB(0xFF, 0x00, 0xFF, 0x00)
-#define BLUE  D3DCOLOR_ARGB(0xFF, 0x00, 0x00, 0xFF)
-
 #include "vendor/imgui/imgui.h"
 #include "vendor/imgui/imgui_impl_dx9.h"
 #include "vendor/imgui/imgui_impl_win32.h"
@@ -74,7 +68,7 @@ static void Uninject()
 	printf(" wrote shellcode into memory at 0x%zx\n invoking shellcode...\n", (uintptr_t)memory);
 
 #pragma warning(push)
-#pragma warning(disable : 6387)
+#pragma warning(disable: 6387)
 	CloseHandle(CreateThread(0, 0, (LPTHREAD_START_ROUTINE)memory, (char*)memory + 0x200, 0, 0));
 #pragma warning(pop)
 }
@@ -145,7 +139,7 @@ void hkDirectX_EndScene(LPDIRECT3DDEVICE9 device)
 	if (toggleKeyDownThisFrame && !toggleKeyDownLastFrame) showImGuiMenu = !showImGuiMenu;
 
 	if (!font) font = drawing::CreateASingleFont(device, "Arial");
-	drawing::WriteText(font, "press NUMPAD9 for hax", 10, 10, 100, 100, DT_LEFT, RED);
+	drawing::WriteText(font, "press NUMPAD9 for hax", 10, 10, 100, 100, DT_LEFT, D3DCOLOR_ARGB(0xFF, 0xFF, 0x00, 0x00));
 
 #define profileName ((wchar_t*)(exeBase + 0x5AB0D2))
 #define spawnManagerPtr (((SpawnManager**)(exeBase + 0x62EA50)))
@@ -180,7 +174,7 @@ void hkDirectX_EndScene(LPDIRECT3DDEVICE9 device)
 	if (PTR_IS_VALID(spawnManagerPtr) &&
 		PTR_IS_VALID(spawnManager) &&
 		PTR_IS_VALID(spawnManager->playerCharacter) &&
-		!PTR_IS_VALID(spawnManager->playerCharacter->ptrToControllingThing) && 
+		!PTR_IS_VALID(spawnManager->playerCharacter->ptrToControllingThing) &&
 
 		PTR_IS_VALID(helpfulDataPtr) &&
 		PTR_IS_VALID(helpfulData) &&
@@ -270,7 +264,7 @@ void hkDirectX_EndScene(LPDIRECT3DDEVICE9 device)
 		if (PTR_IS_VALID(spawnManagerPtr) &&
 			PTR_IS_VALID(spawnManager) &&
 			PTR_IS_VALID(spawnManager->playerCharacter) &&
-			!PTR_IS_VALID(spawnManager->playerCharacter->ptrToControllingThing) && 
+			!PTR_IS_VALID(spawnManager->playerCharacter->ptrToControllingThing) &&
 
 			PTR_IS_VALID(helpfulDataPtr) &&
 			PTR_IS_VALID(helpfulData) &&
