@@ -350,18 +350,12 @@ static void WINAPI InjectedThread(HMODULE module)
 	AllocConsole();
 	FILE* f = nullptr;
 	freopen_s(&f, "CONOUT$", "w", stdout);
-	printf("injected dll at %p\n===========================\n", module);
-
-	std::vector<HWND> windows = util::GetCurrentProcessWindows();
-	printf("found %zd windows for this process\n", windows.size());
-
-	bool hooksSuccess = false;
-
-	for (size_t i = 0; i < windows.size() && !hooksSuccess; ++i)
-	{
-		printf("\ttrying to hook window 0x%zx\n", (uintptr_t)windows[i]);
-		hooksSuccess = dx::CreateHooks(windows[i]) && di::CreateHooks();
-	}
+	printf(
+		"===========================\n"
+		"injected dll at 0x%zx\n"
+		"===========================\n", (uintptr_t)module);
+	
+	bool hooksSuccess = dx::CreateHooks(util::GetCurrentProcessWindow()) && di::CreateHooks();
 
 	if (!hooksSuccess)
 	{
