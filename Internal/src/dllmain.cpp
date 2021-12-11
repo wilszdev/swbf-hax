@@ -67,6 +67,8 @@ static void Uninject()
 
 	printf(" wrote shellcode into memory at 0x%zx\n invoking shellcode...\n", (uintptr_t)memory);
 
+	FreeConsole();
+
 #pragma warning(push)
 #pragma warning(disable: 6387)
 	CloseHandle(CreateThread(0, 0, (LPTHREAD_START_ROUTINE)memory, (char*)memory + 0x200, 0, 0));
@@ -345,16 +347,26 @@ void hkDirectInput_GetDeviceState(DIMOUSESTATE2* mouseState)
 
 static void WINAPI InjectedThread(HMODULE module)
 {
-	printf("injected dll at %p\n===========================\n\n", module);
 	AllocConsole();
 	FILE* f = nullptr;
 	freopen_s(&f, "CONOUT$", "w", stdout);
+	printf("injected dll at %p\n===========================\n", module);
 
-	bool hooksSuccess = dx::CreateHooks(util::GetCurrentProcessWindow()) && di::CreateHooks();
+	std::vector<HWND> windows = util::GetCurrentProcessWindows();
+	printf("found %zd windows for this process\n", windows.size());
+
+	bool hooksSuccess = false;
+
+	for (size_t i = 0; i < windows.size() && !hooksSuccess; ++i)
+	{
+		printf("\ttrying to hook window 0x%zx\n", (uintptr_t)windows[i]);
+		hooksSuccess = dx::CreateHooks(windows[i]) && di::CreateHooks();
+	}
 
 	if (!hooksSuccess)
 	{
 		puts("failed to create hooks. try injecting again.");
+		FreeConsole();
 		FreeLibraryAndExitThread(module, 0);
 	}
 }
