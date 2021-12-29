@@ -37,18 +37,17 @@ int scan::PatternScanAll(std::vector<uintptr_t>* out, const char* pattern, const
 {
 	int count = 0;
 	size_t patternLength = strlen(mask);
-	for (size_t i = 0; i < length; ++i)
+	for (size_t i = 0; i < length; i += 4)
 	{
 		bool match = true;
-		for (size_t j = 0; j < patternLength; ++j)
+		for (size_t j = 0; j < patternLength; j += 4)
 		{
-			bool currentCharMatches = (mask[j] == '?') || (pattern[j] == *(char*)(start + i + j));
+			bool currentCharMatches = (mask[j] == '?') || (*(uint32_t*)(pattern + j) == *(uint32_t*)(start + i + j));
 			match &= currentCharMatches;
 		}
 		if (match)
 		{
 			out->emplace_back(start + i);
-			puts("found a match my dudes");
 			++count;
 		}
 	}
@@ -65,7 +64,8 @@ int scan::InternalPatternScanAll(std::vector<uintptr_t>* out, const char* patter
 		if (!VirtualQuery((void*)current, &mbi, sizeof(mbi)) ||
 			mbi.State != MEM_COMMIT || mbi.Protect == PAGE_NOACCESS) continue;
 
-		count += PatternScanAll(out, pattern, mask, current, mbi.RegionSize);
+		count += PatternScanAll(out, pattern, mask, current, 
+			mbi.RegionSize > length ? length : mbi.RegionSize);
 	}
 
 	return count;
