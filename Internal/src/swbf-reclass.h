@@ -166,3 +166,43 @@ public:
 	struct RedModel* Geometry; //0x00CC
 	struct RedModel* GeometryHighRes; //0x00D0
 }; //Size: 0x00D4
+
+struct WeaponCannonClass
+{
+	char pad_0000[16]; //0x0000
+	void* selfPtr; //0x0010
+	char pad_0014[28]; //0x0014
+	wchar_t* weaponName; //0x0030
+	char pad_0034[4]; //0x0034
+	void* ptr_to_self; //0x0038
+	struct RedModel* GeometryName; //0x003C
+	struct RedModel* HighResGeometry; //0x0040
+	char pad_0044[12]; //0x0044
+	void* ordnancePtr; //0x0050
+	uint32_t RoundPerClip; //0x0054
+	float ProportionOfRoundsUsedPerShot; //0x0058
+	float HeatPerShot; //0x005C
+	float HeatRecoverRate; //0x0060
+	float HeatThreshold; //0x0064
+	float ReloadTime; //0x0068
+	char pad_006C[24]; //0x006C
+	float RecoilStrengthHeavy; //0x0084
+	float RecoilStrengthLight; //0x0088
+	float RecoilLengthLight; //0x008C
+	float RecoilLengthHeavy; //0x0090
+	char pad_0094[12]; //0x0094
+	float RecoilDecayHeavy; //0x00A0
+	char pad_00A4[20]; //0x00A4
+	float ChargeDelayHeavy; //0x00B8
+	char pad_00BC[12]; //0x00BC
+	float LockOnRange; //0x00C8
+	char pad_00CC[12]; //0x00CC
+	float minRange; //0x00D8
+	float optimalRange; //0x00DC
+	float maxRange; //0x00E0
+	char pad_00E4[172]; //0x00E4
+	struct RedModel* muzzle_flash_perhaps ; //0x0190
+	char pad_0194[40]; //0x0194
+	char classLabel[16]; //0x01BC
+	char pad_01CC[156]; //0x01CC
+}; //Size: 0x0268
