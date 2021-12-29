@@ -362,7 +362,7 @@ void hkDirectX_EndScene(LPDIRECT3DDEVICE9 device)
 						for (const uintptr_t addr : addresses)
 						{
 							WeaponCannonClass* wcc = reinterpret_cast<WeaponCannonClass*>(addr);
-							if (PTR_IS_VALID(wcc->weaponName) && PTR_IS_VALID(wcc->GeometryName))
+							if (PTR_IS_VALID(wcc->weaponName) && PTR_IS_VALID(wcc->GeometryName) && PTR_IS_VALID(wcc->ordnancePtr))
 								ordnance[wcc->weaponName] = (uintptr_t)wcc->ordnancePtr;
 						}
 
