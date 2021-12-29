@@ -137,11 +137,11 @@ void hkDirectX_EndScene(LPDIRECT3DDEVICE9 device)
 	}
 
 	static bool toggleKeyDownLastFrame = false;
-	bool toggleKeyDownThisFrame = (GetAsyncKeyState(VK_NUMPAD9));
+	bool toggleKeyDownThisFrame = (GetAsyncKeyState(VK_DELETE));
 	if (toggleKeyDownThisFrame && !toggleKeyDownLastFrame) showImGuiMenu = !showImGuiMenu;
 
 	if (!font) font = drawing::CreateASingleFont(device, "Arial");
-	drawing::WriteText(font, "press NUMPAD9 for hax", 10, 10, 100, 100, DT_LEFT, D3DCOLOR_ARGB(0xFF, 0xFF, 0x00, 0x00));
+	drawing::WriteText(font, "press DELETE for hax", 10, 10, 100, 100, DT_LEFT, D3DCOLOR_ARGB(0xFF, 0xFF, 0x00, 0x00));
 
 #define profileName ((wchar_t*)(exeBase + 0x5AB0D2))
 #define spawnManagerPtr (((SpawnManager**)(exeBase + 0x62EA50)))
