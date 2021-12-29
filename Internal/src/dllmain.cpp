@@ -345,10 +345,43 @@ void hkDirectX_EndScene(LPDIRECT3DDEVICE9 device)
 				{
 					ordnance.clear();
 
-					// rvas are for WeaponCannonClass, WeaponLauncherClass, WeaponGrenadeClass,
-					// WeaponCatapultClass, WeaponDestructClass, WeaponDetonatorClass, WeaponDispenserClass,
-					// WeaonDisguiseClass, WeaponBinocularsClass, WeaponGrapplingHookClass
-					for (uintptr_t rva : {0x4273e8, 0x428188, 0x427e98, 0x427584, 0x427700, 0x427884, 0x427b84, 0x427a00, 0x42726c, 0x427d20})
+					constexpr uintptr_t WEAPON_CANNON_CLASS_VFTABLE_RVA = 0x4273e8;
+					constexpr uintptr_t WEAPON_LAUNCHER_CLASS_VFTABLE_RVA = 0x428188;
+					constexpr uintptr_t WEAPON_GRENADE_CLASS_VFTABLE_RVA = 0x427e98;
+					constexpr uintptr_t WEAPON_CATAPULT_CLASS_VFTABLE_RVA = 0x427584;
+					constexpr uintptr_t WEAPON_DESTRUCT_CLASS_VFTABLE_RVA = 0x427700;
+					constexpr uintptr_t WEAPON_DETONATOR_CLASS_VFTABLE_RVA = 0x427884;
+					constexpr uintptr_t WEAPON_DISPENSER_CLASS_VFTABLE_RVA = 0x427b84;
+					constexpr uintptr_t WEAPON_DISGUISE_CLASS_VFTABLE_RVA = 0x427a00;
+					constexpr uintptr_t WEAPON_BINOCULARS_CLASS_VFTABLE_RVA = 0x42726c;
+					constexpr uintptr_t WEAPON_GRAPPLING_HOOK_CLASS_VFTABLE_RVA = 0x427d20;
+					constexpr uintptr_t WEAPON_LASER_CLASS_VFTABLE_RVA = 0x428004;
+					constexpr uintptr_t WEAPON_MELEE_CLASS_VFTABLE_RVA = 0x4282f4;
+					constexpr uintptr_t WEAPON_SHIELD_CLASS_VFTABLE_RVA = 0x4287c4;
+					constexpr uintptr_t WEAPON_TOW_CABLE_CLASS_VFTABLE_RVA = 0x428948;
+					constexpr uintptr_t WEAPON_REPAIR_CLASS_VFTABLE_RVA = 0x4285ec;
+					constexpr uintptr_t WEAPON_REMOTE_CLASS_VFTABLE_RVA = 0x428478;
+
+					auto VFTABLE_RVA_LIST = {
+						WEAPON_CANNON_CLASS_VFTABLE_RVA,
+						WEAPON_LAUNCHER_CLASS_VFTABLE_RVA,
+						WEAPON_GRENADE_CLASS_VFTABLE_RVA,
+						WEAPON_CATAPULT_CLASS_VFTABLE_RVA,
+						WEAPON_DESTRUCT_CLASS_VFTABLE_RVA,
+						WEAPON_DETONATOR_CLASS_VFTABLE_RVA,
+						WEAPON_DISPENSER_CLASS_VFTABLE_RVA,
+						WEAPON_DISGUISE_CLASS_VFTABLE_RVA,
+						WEAPON_BINOCULARS_CLASS_VFTABLE_RVA,
+						WEAPON_GRAPPLING_HOOK_CLASS_VFTABLE_RVA,
+						WEAPON_LASER_CLASS_VFTABLE_RVA,
+						WEAPON_MELEE_CLASS_VFTABLE_RVA,
+						WEAPON_SHIELD_CLASS_VFTABLE_RVA,
+						WEAPON_TOW_CABLE_CLASS_VFTABLE_RVA,
+						WEAPON_REPAIR_CLASS_VFTABLE_RVA,
+						WEAPON_REMOTE_CLASS_VFTABLE_RVA
+					};
+
+					for (uintptr_t rva : VFTABLE_RVA_LIST)
 					{
 						std::vector<uintptr_t> addresses{};
 
