@@ -96,37 +96,54 @@ public:
 	char pad_0050[68]; //0x0050
 }; //Size: 0x0094
 
-struct EntitySoldier
-{
-public:
-	char pad_0000[4]; //0x0000
-	struct EntitySoldierClass* currentSoldierClass; //0x0004
-	char pad_0008[4]; //0x0008
-	float curHealth; //0x000C
-	float maxHealth; //0x0010
-	char pad_0014[48]; //0x0014
-}; //Size: 0x0044
-
 struct Aimer
 {
-public:
 	char pad_0000[8]; //0x0000
-	void* previous_plus_4; //0x0008
-	void* next_plus_4; //0x000C
+	void* p; //0x0008
+	void* n; //0x000C
 	void* self; //0x0010
 	char pad_0014[4]; //0x0014
 	void* selfPtr; //0x0018
 	char pad_001C[8]; //0x001C
 	struct classWithPlayerDataYay* classWithPlayerDataYay; //0x0024
-	char pad_0028[256]; //0x0028
-	struct WeaponCannon* currentGun; //0x0128
+	char pad_0028[32]; //0x0028
+	float viewAnglesMaybe[3]; //0x0048
+	char pad_0054[28]; //0x0054
+	float pos[3]; //0x0070
+	float posAgain[3]; //0x007C
+	char pad_0088[160]; //0x0088
+	struct WeaponCannon* currentWeapon; //0x0128
 	char pad_012C[20]; //0x012C
 	struct WeaponCannon* gun1; //0x0140
 	struct WeaponCannon* gun2; //0x0144
 	struct WeaponGrenade* nade1; //0x0148
 	struct WeaponGrenade* nade2; //0x014C
-	char pad_0150[52]; //0x0150
+	char pad_0150[16]; //0x0150
+	uint32_t equippedGunIndex; //0x0160
+	uint32_t equippedGrenadeIndexInWeaponArray; //0x0164
+	char pad_0168[248]; //0x0168
+
 }; //Size: 0x0184
+
+struct EntitySoldier_PostCollision
+{
+	char pad_0000[16]; //0x0000
+	void* selfPtr; //0x0010
+	char pad_0014[44]; //0x0014
+}; //Size: 0x0040
+
+struct EntitySoldier
+{
+	char pad_0000[4]; //0x0000
+	struct EntitySoldierClass* currentSoldierClass; //0x0004
+	char pad_0008[4]; //0x0008
+	float curHealth; //0x000C
+	float maxHealth; //0x0010
+	char pad_0014[1612]; //0x0014
+	struct EntitySoldier_PostCollision postcollision; //0x0660
+	struct Aimer yeAimer; //0x06A0
+
+}; //Size: 0x0044
 
 // ptr to this at battlefront.exe + 0x01D95D24
 struct TheStartOfSomeRandomDataThing
@@ -153,7 +170,6 @@ public:
 
 struct WeaponCannon
 {
-public:
 	char pad_0000[96]; //0x0000
 	struct WeaponCannonClass* weaponCannonclass_instance; //0x0060
 	struct WeaponCannonClass* weaponCannonclass_instance_2; //0x0064 // appears to always be the same addr as previous
@@ -201,7 +217,7 @@ struct WeaponCannonClass
 	float optimalRange; //0x00DC
 	float maxRange; //0x00E0
 	char pad_00E4[172]; //0x00E4
-	struct RedModel* muzzle_flash_perhaps ; //0x0190
+	struct RedModel* muzzle_flash_perhaps; //0x0190
 	char pad_0194[40]; //0x0194
 	char classLabel[16]; //0x01BC
 	char pad_01CC[156]; //0x01CC
