@@ -155,8 +155,7 @@ void hkDirectX_EndScene(LPDIRECT3DDEVICE9 device)
 	static float healthValue = 300.0f;
 	static bool infiniteAmmo = false;
 
-	// if the high 2 bits of an address are 0x3F then it's been cleared by game
-	// hopefully
+	// really weird macro, but i guess it works most of the time
 #define PTR_IS_VALID(ptr) ((ptr) && (((uintptr_t)(ptr) & 0xFF000000) != 0x3F000000) && (((uintptr_t)(ptr)) != 0x2580E1C) && (((uintptr_t)(ptr)) != 0xF334F334) && (((uintptr_t)(ptr)) >= 0x1000))
 
 	if (infiniteAmmo &&
@@ -355,7 +354,22 @@ static void WINAPI InjectedThread(HMODULE module)
 		"injected dll at 0x%zx\n"
 		"===========================\n", (uintptr_t)module);
 	
-	bool hooksSuccess = dx::CreateHooks(util::GetCurrentProcessWindow()) && di::CreateHooks();
+	HWND window = util::GetCurrentProcessWindow();
+	
+	if (IsWindowUnicode(window))
+	{
+		wchar_t buffer[128] = { 0 };
+		GetWindowTextW(window, buffer, sizeof(buffer) / sizeof(*buffer));
+		wprintf(L"window text: %s\n", buffer);
+	}
+	else
+	{
+		char buffer[128] = { 0 };
+		GetWindowTextA(window, buffer, sizeof(buffer) / sizeof(*buffer));
+		printf("window text: %s\n", buffer);
+	}
+
+	bool hooksSuccess = dx::CreateHooks(window) && di::CreateHooks();
 
 	if (!hooksSuccess)
 	{
