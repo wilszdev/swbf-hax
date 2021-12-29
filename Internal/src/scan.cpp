@@ -1,7 +1,7 @@
 #include "scan.h"
 #include "WindowsLessBloat.h"
 
-uintptr_t scan::PatternScanFirst(char* pattern, char* mask, uintptr_t start, size_t length)
+uintptr_t scan::PatternScanFirst(const char* pattern, const char* mask, uintptr_t start, size_t length)
 {
 	size_t patternLength = strlen(mask);
 	for (size_t i = 0; i < length; ++i)
@@ -18,7 +18,7 @@ uintptr_t scan::PatternScanFirst(char* pattern, char* mask, uintptr_t start, siz
 	return 0;
 }
 
-uintptr_t scan::InternalPatternScanFirst(char* pattern, char* mask, uintptr_t start, size_t length)
+uintptr_t scan::InternalPatternScanFirst(const char* pattern, const char* mask, uintptr_t start, size_t length)
 {
 	MEMORY_BASIC_INFORMATION mbi = { 0 };
 
@@ -33,7 +33,7 @@ uintptr_t scan::InternalPatternScanFirst(char* pattern, char* mask, uintptr_t st
 	return 0;
 }
 
-int scan::PatternScanAll(std::vector<uintptr_t>* out, char* pattern, char* mask, uintptr_t start, size_t length)
+int scan::PatternScanAll(std::vector<uintptr_t>* out, const char* pattern, const char* mask, uintptr_t start, size_t length)
 {
 	int count = 0;
 	size_t patternLength = strlen(mask);
@@ -54,7 +54,7 @@ int scan::PatternScanAll(std::vector<uintptr_t>* out, char* pattern, char* mask,
 	return count;
 }
 
-int scan::InternalPatternScanAll(std::vector<uintptr_t>* out, char* pattern, char* mask, uintptr_t start, size_t length)
+int scan::InternalPatternScanAll(std::vector<uintptr_t>* out, const char* pattern, const char* mask, uintptr_t start, size_t length)
 {
 	int count = 0;
 	MEMORY_BASIC_INFORMATION mbi = { 0 };
