@@ -48,6 +48,7 @@ int scan::PatternScanAll(std::vector<uintptr_t>* out, const char* pattern, const
 		if (match)
 		{
 			out->emplace_back(start + i);
+			puts("found a match my dudes");
 			++count;
 		}
 	}
@@ -64,7 +65,7 @@ int scan::InternalPatternScanAll(std::vector<uintptr_t>* out, const char* patter
 		if (!VirtualQuery((void*)current, &mbi, sizeof(mbi)) ||
 			mbi.State != MEM_COMMIT || mbi.Protect == PAGE_NOACCESS) continue;
 
-		count += PatternScanFirst(pattern, mask, current, mbi.RegionSize);
+		count += PatternScanAll(out, pattern, mask, current, mbi.RegionSize);
 	}
 
 	return count;
