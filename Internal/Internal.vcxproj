@@ -173,6 +173,7 @@
     <ClCompile Include="src\dllmain.cpp" />
     <ClCompile Include="src\dx.cpp" />
     <ClCompile Include="src\hook.cpp" />
+    <ClCompile Include="src\scan.cpp" />
     <ClCompile Include="src\util.cpp" />
     <ClCompile Include="src\vendor\imgui\imgui.cpp" />
     <ClCompile Include="src\vendor\imgui\imgui_demo.cpp" />
@@ -188,6 +189,7 @@
     <ClInclude Include="src\dx.h" />
     <ClInclude Include="src\hook.h" />
     <ClInclude Include="src\ImGuiStuff.h" />
+    <ClInclude Include="src\scan.h" />
     <ClInclude Include="src\swbf-reclass.h" />
     <ClInclude Include="src\util.h" />
     <ClInclude Include="src\vendor\imgui\imconfig.h" />
