@@ -4,7 +4,9 @@
 #include "dx.h"
 #include "util.h"
 #include "drawing.hpp"
+#include "scan.h"
 #include <cstdio>
+#include <unordered_map>
 
 #include "swbf-reclass.h"
 
@@ -169,10 +171,10 @@ void hkDirectX_EndScene(LPDIRECT3DDEVICE9 device)
 
 		PTR_IS_VALID(helpfulDataPtr) &&
 		PTR_IS_VALID(helpfulData) &&
-		PTR_IS_VALID(helpfulData->localPlayerAimer.currentGun))
+		PTR_IS_VALID(helpfulData->localPlayerAimer.currentWeapon))
 	{
-		helpfulData->localPlayerAimer.currentGun->proportionOfAmmunitionLeftInMag = 1.0;
-		helpfulData->localPlayerAimer.currentGun->weaponHeat = 0.0;
+		helpfulData->localPlayerAimer.currentWeapon->proportionOfAmmunitionLeftInMag = 1.0;
+		helpfulData->localPlayerAimer.currentWeapon->weaponHeat = 0.0;
 	}
 #pragma endregion
 
@@ -284,7 +286,7 @@ void hkDirectX_EndScene(LPDIRECT3DDEVICE9 device)
 
 			PTR_IS_VALID(helpfulDataPtr) &&
 			PTR_IS_VALID(helpfulData) &&
-			PTR_IS_VALID(helpfulData->localPlayerAimer.currentGun))
+			PTR_IS_VALID(helpfulData->localPlayerAimer.currentWeapon))
 		{
 			ImGui::Checkbox("infinite ammo", &infiniteAmmo);
 		}
@@ -312,12 +314,93 @@ void hkDirectX_EndScene(LPDIRECT3DDEVICE9 device)
 		}
 #pragma endregion
 
+		static bool ordnanceWindowOpen = false;
+		if (ImGui::Button(ordnanceWindowOpen ? "Hide ordnance window" : "Show ordnance window"))
+			ordnanceWindowOpen = !ordnanceWindowOpen;
+
 		if (ImGui::Button("Uninject hax dll"))
 		{
 			shouldShutdownHax = true;
 		}
 
 		ImGui::End();
+
+		if (ordnanceWindowOpen)
+		{
+			struct weaponOrdnanceEntry
+			{
+				wchar_t* weaponName;
+				uintptr_t ordnanceAddress;
+			};
+
+			static std::unordered_map<wchar_t*, uintptr_t> ordnance{};
+
+			auto replaceOrdnance = [](uintptr_t address)
+			{
+			};
+
+			if (ImGui::Begin("ordnance changer", &ordnanceWindowOpen))
+			{
+				if (ImGui::Button("scan for ordnance types"))
+				{
+					ordnance.clear();
+
+					// rvas are for WeaponCannonClass, WeaponLauncherClass, WeaponGrenadeClass,
+					// WeaponCatapultClass, WeaponDestructClass, WeaponDetonatorClass, WeaponDispenserClass,
+					// WeaonDisguiseClass, WeaponBinocularsClass, WeaponGrapplingHookClass
+					for (uintptr_t rva : {0x4273e8, 0x428188, 0x427e98, 0x427584, 0x427700, 0x427884, 0x427b84, 0x427a00, 0x42726c, 0x427d20})
+					{
+						std::vector<uintptr_t> addresses{};
+
+						uint32_t wccVftableAddress = exeBase + rva;
+						char pattern[5] = { 0 };
+						memcpy(pattern, &wccVftableAddress, 5);
+
+						int numMatches = scan::InternalPatternScanAll(&addresses, pattern, "xxxx", 0x0B000000, 0x1000000);
+						printf("WeaponCannonClass scan found %d matches:\n", numMatches);
+
+						for (const uintptr_t addr : addresses)
+						{
+							WeaponCannonClass* wcc = reinterpret_cast<WeaponCannonClass*>(addr);
+							if (PTR_IS_VALID(wcc->weaponName) && PTR_IS_VALID(wcc->GeometryName))
+								ordnance[wcc->weaponName] = (uintptr_t)wcc->ordnancePtr;
+						}
+
+						for (auto pair : ordnance)
+						{
+							wchar_t* name = pair.first;
+							uintptr_t ordnancePtr = pair.second;
+
+							wprintf(L"ordnance at 0x%zx is for %s\n", ordnancePtr, name);
+						}
+					}
+				}
+
+				for (auto pair : ordnance)
+				{
+					wchar_t* name = pair.first;
+					uintptr_t ordnancePtr = pair.second;
+
+					char text[32] = { 0 };
+					wcstombs_s(0, text, name, 32);
+					if (ImGui::Button(text))
+					{
+						if (PTR_IS_VALID(spawnManagerPtr) &&
+							PTR_IS_VALID(spawnManager) &&
+							PTR_IS_VALID(spawnManager->playerCharacter) &&
+							PTR_IS_VALID(spawnManager->playerCharacter->currentSoldierMan) &&
+							PTR_IS_VALID(spawnManager->playerCharacter->currentSoldierMan->yeAimer.currentWeapon) &&
+							PTR_IS_VALID(spawnManager->playerCharacter->currentSoldierMan->yeAimer.currentWeapon->weaponCannonclass_instance) &&
+							PTR_IS_VALID(spawnManager->playerCharacter->currentSoldierMan->yeAimer.currentWeapon->weaponCannonclass_instance->ordnancePtr))
+						{
+							printf("ptrs are valid, changing ordnance type to that of %s\n", text);
+							spawnManager->playerCharacter->currentSoldierMan->yeAimer.currentWeapon->weaponCannonclass_instance->ordnancePtr = (void*)ordnancePtr;
+						}
+					}
+				}
+			}
+			ImGui::End();
+		}
 
 		ImGui::EndFrame();
 		ImGui::Render();
