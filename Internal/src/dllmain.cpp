@@ -143,14 +143,6 @@ void hkDirectX_EndScene(LPDIRECT3DDEVICE9 device)
 	if (!font) font = drawing::CreateASingleFont(device, "Arial");
 	drawing::WriteText(font, "press DELETE for hax", 10, 10, 100, 100, DT_LEFT, D3DCOLOR_ARGB(0xFF, 0xFF, 0x00, 0x00));
 
-#define profileName ((wchar_t*)(exeBase + 0x5AB0D2))
-#define spawnManagerPtr (((SpawnManager**)(exeBase + 0x62EA50)))
-#define spawnManager (*spawnManagerPtr)
-#define helpfulDataPtr (((TheStartOfSomeRandomDataThing**)(exeBase + 0x01D95D24)))
-#define helpfulData (*helpfulDataPtr)
-#define playerDataYay (helpfulData->localPlayerAimer.classWithPlayerDataYay)
-#define entitySoldier (helpfulData->localPlayerAimer.classWithPlayerDataYay->currentEntitySoldierInstance)
-
 	static bool lockHealth = false;
 	static float healthValue = 300.0f;
 	static bool infiniteAmmo = false;
@@ -158,6 +150,17 @@ void hkDirectX_EndScene(LPDIRECT3DDEVICE9 device)
 	// really weird macro, but i guess it works most of the time
 #define PTR_IS_VALID(ptr) ((ptr) && (((uintptr_t)(ptr) & 0xFF000000) != 0x3F000000) && (((uintptr_t)(ptr)) != 0x2580E1C) && (((uintptr_t)(ptr)) != 0xF334F334) && (((uintptr_t)(ptr)) >= 0x1000))
 
+#pragma region macros for accessing data
+#define profileName ((wchar_t*)(exeBase + 0x5AB0D2))
+#define spawnManagerPtr (((SpawnManager**)(exeBase + 0x62EA50)))
+#define spawnManager (*spawnManagerPtr)
+#define helpfulDataPtr (((TheStartOfSomeRandomDataThing**)(exeBase + 0x01D95D24)))
+#define helpfulData (*helpfulDataPtr)
+#define playerDataYay (helpfulData->localPlayerAimer.classWithPlayerDataYay)
+#define entitySoldier (helpfulData->localPlayerAimer.classWithPlayerDataYay->currentEntitySoldierInstance)
+#pragma endregion
+
+#pragma region infinite ammo
 	if (infiniteAmmo &&
 		PTR_IS_VALID(spawnManagerPtr) &&
 		PTR_IS_VALID(spawnManager) &&
@@ -171,7 +174,9 @@ void hkDirectX_EndScene(LPDIRECT3DDEVICE9 device)
 		helpfulData->localPlayerAimer.currentGun->proportionOfAmmunitionLeftInMag = 1.0;
 		helpfulData->localPlayerAimer.currentGun->weaponHeat = 0.0;
 	}
+#pragma endregion
 
+#pragma region health lock
 	if (PTR_IS_VALID(spawnManagerPtr) &&
 		PTR_IS_VALID(spawnManager) &&
 		PTR_IS_VALID(spawnManager->playerCharacter) &&
@@ -191,11 +196,13 @@ void hkDirectX_EndScene(LPDIRECT3DDEVICE9 device)
 			healthValue = entitySoldier->curHealth;
 		}
 	}
+#pragma endregion
 
 	bool shouldShutdownHax = false;
 
 	if (showImGuiMenu)
 	{
+#pragma region cursor
 		auto& io = ImGui::GetIO();
 
 		// use the position of the in game cursor, bc it locks to the window for us and stuff like that.
@@ -207,11 +214,13 @@ void hkDirectX_EndScene(LPDIRECT3DDEVICE9 device)
 		io.MousePos.x = ((float)(*(int*)(exeBase + 0x7027C4))) / 1024.0f * (float)clientRect.right;
 		io.MousePos.y = ((float)(*(int*)(exeBase + 0x7027C8))) / 624.0f * (float)clientRect.bottom;
 		io.WantSetMousePos = true;
+#pragma endregion
 
 		ImGui_ImplDX9_NewFrame();
 		ImGui_ImplWin32_NewFrame();
 		ImGui::NewFrame();
 
+#pragma region imgui::begin with profile name
 		if (profileName && *profileName)
 		{
 			char tmpProfileName[32] = { 0 };
@@ -224,7 +233,9 @@ void hkDirectX_EndScene(LPDIRECT3DDEVICE9 device)
 		{
 			ImGui::Begin("Hello there!");
 		}
+#pragma endregion
 
+#pragma region team and class names
 		if (PTR_IS_VALID(spawnManagerPtr) && PTR_IS_VALID(spawnManager) &&
 			PTR_IS_VALID(spawnManager->playerCharacter) &&
 			PTR_IS_VALID(spawnManager->playerCharacter->currentClass) &&
@@ -239,7 +250,9 @@ void hkDirectX_EndScene(LPDIRECT3DDEVICE9 device)
 			wcstombs_s(0, tmpClassName, spawnManager->playerCharacter->currentClass->className, 32);
 			ImGui::Text("team:%s\nclass:%s\n", tmpTeamName, tmpClassName);
 		}
+#pragma endregion
 
+#pragma region health lock toggle
 		if (PTR_IS_VALID(spawnManagerPtr) &&
 			PTR_IS_VALID(spawnManager) &&
 			PTR_IS_VALID(spawnManager->playerCharacter) &&
@@ -261,7 +274,9 @@ void hkDirectX_EndScene(LPDIRECT3DDEVICE9 device)
 				healthValue = entitySoldier->curHealth;
 			}
 		}
+#pragma endregion
 
+#pragma region infinite ammo toggle
 		if (PTR_IS_VALID(spawnManagerPtr) &&
 			PTR_IS_VALID(spawnManager) &&
 			PTR_IS_VALID(spawnManager->playerCharacter) &&
@@ -273,6 +288,9 @@ void hkDirectX_EndScene(LPDIRECT3DDEVICE9 device)
 		{
 			ImGui::Checkbox("infinite ammo", &infiniteAmmo);
 		}
+#pragma endregion
+
+#pragma region instant win
 
 		// instant win by setting remaining units of other team to zero
 		if (PTR_IS_VALID(spawnManagerPtr) &&
@@ -292,6 +310,7 @@ void hkDirectX_EndScene(LPDIRECT3DDEVICE9 device)
 				spawnManager->Teams[targetIndex]->remainingUnits = 0;
 			}
 		}
+#pragma endregion
 
 		if (ImGui::Button("Uninject hax dll"))
 		{
@@ -353,9 +372,9 @@ static void WINAPI InjectedThread(HMODULE module)
 		"===========================\n"
 		"injected dll at 0x%zx\n"
 		"===========================\n", (uintptr_t)module);
-	
+
 	HWND window = util::GetCurrentProcessWindow();
-	
+
 	if (IsWindowUnicode(window))
 	{
 		wchar_t buffer[128] = { 0 };
