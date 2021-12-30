@@ -405,6 +405,8 @@ void hkDirectX_EndScene(LPDIRECT3DDEVICE9 device)
 					}
 				}
 
+				std::vector<wchar_t*> namesUsed{ 32, 0 };
+
 				for (auto pair : ordnance)
 				{
 					wchar_t* name = pair.first;
@@ -412,6 +414,19 @@ void hkDirectX_EndScene(LPDIRECT3DDEVICE9 device)
 
 					char text[32] = { 0 };
 					wcstombs_s(0, text, name, 32);
+
+					// if name used already, append "duplicate"
+					for (const auto& n : namesUsed)
+					{
+						if (lstrcmpW(name, n) == 0)
+						{
+							strcat_s(text, 32, " (duplicate)");
+							break;
+						}
+					}
+
+					namesUsed.emplace_back(name);
+
 					if (ImGui::Button(text))
 					{
 						if (PTR_IS_VALID(spawnManagerPtr) &&
