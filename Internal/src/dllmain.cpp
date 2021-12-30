@@ -385,22 +385,17 @@ void hkDirectX_EndScene(LPDIRECT3DDEVICE9 device)
 						char pattern[5] = { 0 };
 						memcpy(pattern, &wccVftableAddress, 5);
 
-						int numMatches = scan::InternalPatternScanAll(&addresses, pattern, "xxxx", 0x0B000000, 0x1000000);
-						printf("WeaponCannonClass scan found %d matches:\n", numMatches);
+						int numMatches = scan::InternalPatternScanAll(&addresses, pattern, "xxxx", 0x09000000, 0x3000000);
+						printf("scan found %d matches:\n", numMatches);
 
 						for (const uintptr_t addr : addresses)
 						{
 							WeaponCannonClass* wcc = reinterpret_cast<WeaponCannonClass*>(addr);
 							if (PTR_IS_VALID(wcc->weaponName) && PTR_IS_VALID(wcc->GeometryName) && PTR_IS_VALID(wcc->ordnancePtr))
+							{
 								ordnance[wcc->weaponName] = (uintptr_t)wcc->ordnancePtr;
-						}
-
-						for (auto pair : ordnance)
-						{
-							wchar_t* name = pair.first;
-							uintptr_t ordnancePtr = pair.second;
-
-							wprintf(L"ordnance at 0x%zx is for %s\n", ordnancePtr, name);
+								wprintf(L"ordnance at 0x%zx is for %s\n", (uintptr_t)wcc->ordnancePtr, wcc->weaponName);
+							}
 						}
 					}
 				}
