@@ -8,4 +8,4 @@ features:
 - infinite ammo
 - instant win
 - change weapon ordnance type
-- very basic esp. quite buggy
+- very basic esp. less buggy now (?)
