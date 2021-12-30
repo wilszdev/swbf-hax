@@ -79,7 +79,7 @@ public:
 	uint32_t _startingUnits; //0x0028
 	uint32_t numCharactersTotal; //0x002C
 	uint32_t numCharactersAlive; //0x0030
-	struct character_array* charactersOnThisTeam; //0x0034
+	struct Character** charactersOnThisTeam; //0x0034
 	char pad_0038[12]; //0x0038
 }; //Size: 0x0044
 

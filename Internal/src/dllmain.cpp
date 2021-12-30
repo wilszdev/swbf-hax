@@ -125,8 +125,59 @@ static void ShutdownHax()
 	Uninject();
 }
 
+// really weird macro, but i guess it works most of the time
+#define PTR_IS_VALID(ptr) ((ptr) && (((uintptr_t)(ptr) & 0xFF000000) != 0x3F000000) && (((uintptr_t)(ptr)) != 0x2580E1C) && (((uintptr_t)(ptr)) != 0xF334F334) && (((uintptr_t)(ptr)) >= 0x1000))
+
 static bool showImGuiMenu = false;
 static uintptr_t exeBase = 0;
+
+static bool WorldToScreen(LPDIRECT3DDEVICE9 device, D3DXVECTOR3* pos, D3DXVECTOR3* out) {
+	D3DVIEWPORT9 viewPort;
+	D3DXMATRIX view, projection, world;
+
+	device->GetViewport(&viewPort);
+	device->GetTransform(D3DTS_VIEW, &view);
+	device->GetTransform(D3DTS_PROJECTION, &projection);
+	D3DXMatrixIdentity(&world);
+
+	D3DXVec3Project(out, pos, &viewPort, &projection, &view, &world);
+	if (out->z < 1) {
+		return true;
+	}
+
+	return false;
+}
+
+static bool DrawTeamEsp(LPDIRECT3DDEVICE9 device, size_t teamIndex, uint32_t colour)
+{
+	if (!PTR_IS_VALID((SpawnManager**)(exeBase + 0x62EA50)) ||
+		!PTR_IS_VALID(*(SpawnManager**)(exeBase + 0x62EA50))) return false;
+
+	SpawnManager* spawnManager = *(SpawnManager**)(exeBase + 0x62EA50);
+	Team* team = spawnManager->Teams[teamIndex];
+
+	if (!PTR_IS_VALID(team)) return false;
+
+	for (int i = 0; i < team->numCharactersTotal; ++i)
+	{
+		Character* character = team->charactersOnThisTeam[i];
+
+		if (!PTR_IS_VALID(character) ||
+			!PTR_IS_VALID(character->currentSoldierMan) ||
+			!PTR_IS_VALID(character->currentSoldierMan->yeAimer.selfPtr)) return false;
+
+#define position character->currentSoldierMan->yeAimer.pos
+
+		D3DXVECTOR3 worldPos{ position[0], position[1], position[2] };
+		D3DXVECTOR3 screenPos{};
+
+		if (WorldToScreen(device, &worldPos, &screenPos))
+		{
+			drawing::DrawFilledRect(device, screenPos.x - 2, screenPos.y - 2, 4, 4, colour);
+		}
+	}
+}
+
 void hkDirectX_EndScene(LPDIRECT3DDEVICE9 device)
 {
 	static bool initialised = false;
@@ -148,9 +199,6 @@ void hkDirectX_EndScene(LPDIRECT3DDEVICE9 device)
 	static bool lockHealth = false;
 	static float healthValue = 300.0f;
 	static bool infiniteAmmo = false;
-
-	// really weird macro, but i guess it works most of the time
-#define PTR_IS_VALID(ptr) ((ptr) && (((uintptr_t)(ptr) & 0xFF000000) != 0x3F000000) && (((uintptr_t)(ptr)) != 0x2580E1C) && (((uintptr_t)(ptr)) != 0xF334F334) && (((uintptr_t)(ptr)) >= 0x1000))
 
 #pragma region macros for accessing data
 #define profileName ((wchar_t*)(exeBase + 0x5AB0D2))
@@ -198,6 +246,23 @@ void hkDirectX_EndScene(LPDIRECT3DDEVICE9 device)
 			healthValue = entitySoldier->curHealth;
 		}
 	}
+#pragma endregion
+
+#pragma region esp
+
+	static int espTeamIndex = 1;
+	static float espColourRGB[3] = { 0.0f, 1.0f, 0.0f }; ;
+	static bool espEnabled = false;
+
+	if (espEnabled)
+	{
+		DrawTeamEsp(device, espTeamIndex, D3DCOLOR_ARGB(0xFF,
+			(uint8_t)(0xFF * espColourRGB[0]),
+			(uint8_t)(0xFF * espColourRGB[1]),
+			(uint8_t)(0xFF * espColourRGB[2])
+		));
+	}
+
 #pragma endregion
 
 	bool shouldShutdownHax = false;
@@ -314,6 +379,14 @@ void hkDirectX_EndScene(LPDIRECT3DDEVICE9 device)
 				spawnManager->Teams[targetIndex]->remainingUnits = 0;
 			}
 		}
+#pragma endregion
+
+#pragma region esp
+
+		ImGui::Checkbox("esp enabled", &espEnabled);
+		ImGui::ColorEdit3("esp colour", espColourRGB);
+		ImGui::SliderInt("esp team index", &espTeamIndex, 1, 3);
+
 #pragma endregion
 
 		static bool ordnanceWindowOpen = false;
