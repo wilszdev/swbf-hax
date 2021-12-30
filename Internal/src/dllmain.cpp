@@ -335,10 +335,6 @@ void hkDirectX_EndScene(LPDIRECT3DDEVICE9 device)
 
 			static std::unordered_map<wchar_t*, uintptr_t> ordnance{};
 
-			auto replaceOrdnance = [](uintptr_t address)
-			{
-			};
-
 			if (ImGui::Begin("ordnance changer", &ordnanceWindowOpen))
 			{
 				if (ImGui::Button("scan for ordnance types"))
