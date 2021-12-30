@@ -158,6 +158,8 @@ static bool DrawTeamEsp(LPDIRECT3DDEVICE9 device, size_t teamIndex, uint32_t col
 
 	if (!PTR_IS_VALID(team)) return false;
 
+	bool retval = true;
+
 	for (int i = 0; i < team->numCharactersTotal; ++i)
 	{
 		Character* character = team->charactersOnThisTeam[i];
@@ -166,7 +168,11 @@ static bool DrawTeamEsp(LPDIRECT3DDEVICE9 device, size_t teamIndex, uint32_t col
 
 		if (!PTR_IS_VALID(character) ||
 			!PTR_IS_VALID(character->currentSoldierMan) ||
-			!PTR_IS_VALID(character->currentSoldierMan->yeAimer.selfPtr)) return false;
+			!PTR_IS_VALID(character->currentSoldierMan->yeAimer.selfPtr))
+		{
+			retval = false;
+			continue;
+		};
 
 #define position character->currentSoldierMan->yeAimer.pos
 
@@ -178,6 +184,7 @@ static bool DrawTeamEsp(LPDIRECT3DDEVICE9 device, size_t teamIndex, uint32_t col
 			drawing::DrawFilledRect(device, screenPos.x - 2, screenPos.y - 2, 4, 4, colour);
 		}
 	}
+	return retval;
 }
 
 void hkDirectX_EndScene(LPDIRECT3DDEVICE9 device)
