@@ -4,13 +4,19 @@
 uintptr_t scan::PatternScanFirst(const char* pattern, const char* mask, uintptr_t start, size_t length)
 {
 	size_t patternLength = strlen(mask);
-	for (size_t i = 0; i < length; ++i)
+	for (size_t i = 0; i < length; i += 4)
 	{
 		bool match = true;
-		for (size_t j = 0; j < patternLength; ++j)
+		for (size_t j = 0; j < patternLength; j += 4)
 		{
-			bool currentCharMatches = (mask[j] == '?') || (pattern[j] == *(char*)(start + i + j));
-			match &= currentCharMatches;
+			uint32_t fourByteMask = -1;
+			if (mask[j + 0] == '?') fourByteMask &= 0x00FFFFFF;
+			if (mask[j + 1] == '?') fourByteMask &= 0xFF00FFFF;
+			if (mask[j + 2] == '?') fourByteMask &= 0xFFFF00FF;
+			if (mask[j + 3] == '?') fourByteMask &= 0xFFFFFF00;
+
+			bool currentMatch = ((*(uint32_t*)(pattern + j) & fourByteMask) == (*(uint32_t*)(start + i + j) & fourByteMask));
+			match &= currentMatch;
 		}
 		if (match)
 			return start + i;
