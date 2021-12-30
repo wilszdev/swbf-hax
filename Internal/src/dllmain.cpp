@@ -231,11 +231,11 @@ void hkDirectX_EndScene(LPDIRECT3DDEVICE9 device)
 			wcstombs_s(0, tmpProfileName, profileName, 32);
 			char title[64] = { 0 };
 			sprintf_s(title, 64, "Hello there, %s!", tmpProfileName);
-			ImGui::Begin(title);
+			ImGui::Begin(title, &showImGuiMenu);
 		}
 		else
 		{
-			ImGui::Begin("Hello there!");
+			ImGui::Begin("Hello there!", &showImGuiMenu);
 		}
 #pragma endregion
 
