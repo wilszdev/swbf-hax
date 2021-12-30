@@ -168,13 +168,14 @@ static bool DrawTeamEsp(LPDIRECT3DDEVICE9 device, size_t teamIndex, uint32_t col
 
 		if (!PTR_IS_VALID(character) ||
 			!PTR_IS_VALID(character->currentSoldierMan) ||
-			!PTR_IS_VALID(character->currentSoldierMan->yeAimer.selfPtr))
+			!PTR_IS_VALID(character->currentSoldierMan->yeAimer.selfPtr) ||
+			!PTR_IS_VALID(character->currentSoldierMan->yeAimer.classWithPlayerDataYay))
 		{
 			retval = false;
 			continue;
 		};
 
-#define position character->currentSoldierMan->yeAimer.pos
+#define position (&character->currentSoldierMan->yeAimer.classWithPlayerDataYay->X)
 
 		D3DXVECTOR3 worldPos{ position[0], position[1], position[2] };
 		D3DXVECTOR3 screenPos{};
