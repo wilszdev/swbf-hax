@@ -222,6 +222,8 @@ void hkDirectX_EndScene(LPDIRECT3DDEVICE9 device)
 		ImGui_ImplWin32_NewFrame();
 		ImGui::NewFrame();
 
+#pragma region main cheat window
+
 #pragma region imgui::begin with profile name
 		if (profileName && *profileName)
 		{
@@ -325,18 +327,17 @@ void hkDirectX_EndScene(LPDIRECT3DDEVICE9 device)
 
 		ImGui::End();
 
+#pragma endregion
+
+#pragma region ordnance changer window
+
 		if (ordnanceWindowOpen)
 		{
-			struct weaponOrdnanceEntry
-			{
-				wchar_t* weaponName;
-				uintptr_t ordnanceAddress;
-			};
-
 			static std::unordered_map<wchar_t*, uintptr_t> ordnance{};
 
 			if (ImGui::Begin("ordnance changer", &ordnanceWindowOpen))
 			{
+#pragma region scan
 				if (ImGui::Button("scan for ordnance types"))
 				{
 					ordnance.clear();
@@ -399,6 +400,9 @@ void hkDirectX_EndScene(LPDIRECT3DDEVICE9 device)
 						}
 					}
 				}
+#pragma endregion
+
+#pragma region render all the buttons
 
 				std::vector<wchar_t*> namesUsed{ 32, 0 };
 
@@ -437,9 +441,11 @@ void hkDirectX_EndScene(LPDIRECT3DDEVICE9 device)
 						}
 					}
 				}
+#pragma endregion
 			}
 			ImGui::End();
 		}
+#pragma endregion
 
 		ImGui::EndFrame();
 		ImGui::Render();
