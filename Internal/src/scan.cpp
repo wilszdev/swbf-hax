@@ -42,8 +42,14 @@ int scan::PatternScanAll(std::vector<uintptr_t>* out, const char* pattern, const
 		bool match = true;
 		for (size_t j = 0; j < patternLength; j += 4)
 		{
-			bool currentCharMatches = (mask[j] == '?') || (*(uint32_t*)(pattern + j) == *(uint32_t*)(start + i + j));
-			match &= currentCharMatches;
+			uint32_t fourByteMask = -1;
+			if (mask[j + 0] == '?') fourByteMask &= 0x00FFFFFF;
+			if (mask[j + 1] == '?') fourByteMask &= 0xFF00FFFF;
+			if (mask[j + 2] == '?') fourByteMask &= 0xFFFF00FF;
+			if (mask[j + 3] == '?') fourByteMask &= 0xFFFFFF00;
+
+			bool currentMatch = ((*(uint32_t*)(pattern + j) & fourByteMask) == (*(uint32_t*)(start + i + j) & fourByteMask));
+			match &= currentMatch;
 		}
 		if (match)
 		{
