@@ -162,6 +162,8 @@ static bool DrawTeamEsp(LPDIRECT3DDEVICE9 device, size_t teamIndex, uint32_t col
 	{
 		Character* character = team->charactersOnThisTeam[i];
 
+		if (character == spawnManager->playerCharacter) continue; // dont esp ourselves
+
 		if (!PTR_IS_VALID(character) ||
 			!PTR_IS_VALID(character->currentSoldierMan) ||
 			!PTR_IS_VALID(character->currentSoldierMan->yeAimer.selfPtr)) return false;
