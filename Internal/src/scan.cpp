@@ -31,7 +31,7 @@ uintptr_t scan::InternalPatternScanFirst(const char* pattern, const char* mask, 
 	for (uintptr_t current = start; current < start + length; current += mbi.RegionSize)
 	{
 		if (!VirtualQuery((void*)current, &mbi, sizeof(mbi)) ||
-			mbi.State != MEM_COMMIT || mbi.Protect == PAGE_NOACCESS) continue;
+			mbi.State != MEM_COMMIT || mbi.Protect & (PAGE_GUARD | PAGE_NOACCESS)) continue;
 
 		return PatternScanFirst(pattern, mask, current, mbi.RegionSize);
 	}
@@ -74,7 +74,7 @@ int scan::InternalPatternScanAll(std::vector<uintptr_t>* out, const char* patter
 	for (uintptr_t current = start; current < start + length; current += mbi.RegionSize)
 	{
 		if (!VirtualQuery((void*)current, &mbi, sizeof(mbi)) ||
-			mbi.State != MEM_COMMIT || mbi.Protect == PAGE_NOACCESS) continue;
+			mbi.State != MEM_COMMIT || mbi.Protect & (PAGE_GUARD | PAGE_NOACCESS)) continue;
 
 		count += PatternScanAll(out, pattern, mask, current, 
 			mbi.RegionSize > length ? length : mbi.RegionSize);
