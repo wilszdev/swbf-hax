@@ -14,6 +14,20 @@
 #include "vendor/imgui/imgui_impl_dx9.h"
 #include "vendor/imgui/imgui_impl_win32.h"
 
+void LOG(const char* format, ...)
+{
+	static char* buf = new char[0x1000];
+	*buf = 0;
+
+	char* argp = (char*)&format + sizeof(format);
+
+	vsprintf_s(buf, 0x1000, format, argp);
+
+	argp = nullptr;
+
+	OutputDebugStringA(buf);
+}
+
 struct shellcode_info
 {
 	void* GetModuleHandleA;
