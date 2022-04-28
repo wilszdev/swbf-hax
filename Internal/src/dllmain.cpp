@@ -473,6 +473,12 @@ void hkDirectX_EndScene(LPDIRECT3DDEVICE9 device)
 
 #pragma endregion
 
+#pragma region ptr cache
+
+		ImGui::SliderInt("Ptr validation cache timeout", &ptrCacheTimeout, 1, 59);
+
+#pragma endregion
+
 		static bool ordnanceWindowOpen = false;
 		if (ImGui::Button(ordnanceWindowOpen ? "Hide ordnance window" : "Show ordnance window"))
 			ordnanceWindowOpen = !ordnanceWindowOpen;
