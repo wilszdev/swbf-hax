@@ -14,7 +14,8 @@
 #include "vendor/imgui/imgui_impl_dx9.h"
 #include "vendor/imgui/imgui_impl_win32.h"
 
-void LOG(const char* format, ...)
+#if _DEBUG
+void DebugLog(const char* format, ...)
 {
 	static char* buf = new char[0x1000];
 	*buf = 0;
@@ -27,6 +28,11 @@ void LOG(const char* format, ...)
 
 	OutputDebugStringA(buf);
 }
+#define LOG DebugLog
+#else
+#define LOG(x, ...)
+#endif
+
 
 struct shellcode_info
 {
