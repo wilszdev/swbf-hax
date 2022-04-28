@@ -139,8 +139,68 @@ static void ShutdownHax()
 	Uninject();
 }
 
-// really weird macro, but i guess it works most of the time
-#define PTR_IS_VALID(ptr) ((ptr) && (((uintptr_t)(ptr) & 0xFF000000) != 0x3F000000) && (((uintptr_t)(ptr)) != 0x2580E1C) && (((uintptr_t)(ptr)) != 0xF334F334) && (((uintptr_t)(ptr)) >= 0x1000))
+static inline bool good_ptr(const void* ptr)
+{
+	MEMORY_BASIC_INFORMATION mbi = {};
+	if (!VirtualQuery(ptr, &mbi, sizeof(MEMORY_BASIC_INFORMATION)))
+		return false;
+
+	if (mbi.State != MEM_COMMIT)
+		return false;
+
+	if (mbi.Protect == PAGE_NOACCESS || mbi.Protect == PAGE_EXECUTE)
+		return false;
+
+	// could also have a size parameter, then use mbi.RegionSize to check next region, and so on
+	// https://stackoverflow.com/questions/18394647/can-i-check-if-memory-block-is-readable-without-raising-exception-with-c
+
+	return true;
+}
+
+static int ptrCacheTimeout = 10;
+bool ptr_is_good(const void* ptr)
+{
+	SYSTEMTIME time = {};
+	GetSystemTime(&time);
+
+	struct ptr_cache_record
+	{
+		const void* ptr;
+		bool valid;
+		SYSTEMTIME time;
+	};
+
+	static std::unordered_map<const void*, ptr_cache_record> cache;
+
+	if (ptr == nullptr)
+		return false;
+
+	if (cache.find(ptr) != cache.end())
+	{
+		const ptr_cache_record& pcr = cache[ptr];
+		if (time.wYear != pcr.time.wYear
+			|| time.wMonth != pcr.time.wMonth
+			|| time.wDay != pcr.time.wDay
+			|| time.wHour != pcr.time.wHour
+			|| time.wMinute != pcr.time.wMinute
+			|| time.wSecond - pcr.time.wSecond >= (uint16_t)ptrCacheTimeout
+			)
+		{
+
+			LOG("[INTERNAL.DLL] removing cached ptr 0x%zx (%s)\n", (uintptr_t)ptr, pcr.valid ? "good" : "bad");
+			cache.erase(ptr);
+		}
+		else
+			return pcr.valid;
+	}
+	bool retval = good_ptr(ptr);
+	cache[ptr] = {ptr, retval, time};
+	LOG("[INTERNAL.DLL] cached ptr 0x%zx (%s)\n", (uintptr_t)ptr, retval ? "good" : "bad");
+
+	return retval;
+}
+
+#define PTR_IS_VALID(ptr) (ptr_is_good((void*)(ptr)))
 
 static bool showImGuiMenu = false;
 static uintptr_t exeBase = 0;
