@@ -148,7 +148,7 @@ static inline bool good_ptr(const void* ptr)
 	if (mbi.State != MEM_COMMIT)
 		return false;
 
-	if (mbi.Protect == PAGE_NOACCESS || mbi.Protect == PAGE_EXECUTE)
+	if (mbi.Protect & (PAGE_NOACCESS | PAGE_EXECUTE | PAGE_GUARD))
 		return false;
 
 	// could also have a size parameter, then use mbi.RegionSize to check next region, and so on
