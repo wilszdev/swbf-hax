@@ -48,7 +48,7 @@ namespace dx
 		D3DPRESENT_PARAMETERS params = {};
 		params.Windowed = false;
 		params.SwapEffect = D3DSWAPEFFECT_DISCARD;
-		params.hDeviceWindow = window;
+		params.hDeviceWindow = GetForegroundWindow();
 
 		IDirect3DDevice9* dummyDevice = nullptr;
 
