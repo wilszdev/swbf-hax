@@ -687,21 +687,6 @@ static void WINAPI InjectedThread(HMODULE module)
 		"injected dll at 0x%zx\n"
 		"===========================\n", (uintptr_t)module);
 
-	HWND window = util::GetCurrentProcessWindow();
-
-	if (IsWindowUnicode(window))
-	{
-		wchar_t buffer[128] = { 0 };
-		GetWindowTextW(window, buffer, sizeof(buffer) / sizeof(*buffer));
-		wprintf(L"window text: %s\n", buffer);
-	}
-	else
-	{
-		char buffer[128] = { 0 };
-		GetWindowTextA(window, buffer, sizeof(buffer) / sizeof(*buffer));
-		printf("window text: %s\n", buffer);
-	}
-
 	bool hooksSuccess = dx::CreateHooks() && di::CreateHooks();
 
 	if (!hooksSuccess)
