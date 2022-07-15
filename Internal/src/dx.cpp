@@ -18,9 +18,9 @@ namespace dx
 	uint8_t ResetOriginalBytes[RESET_PATCH_BYTECOUNT] = { 0 };
 	Reset_fn* originalReset = nullptr;
 
-	bool CreateHooks(HWND window)
+	bool CreateHooks()
 	{
-		if (!CopyVtable(window))
+		if (!CopyVtable())
 			return false;
 
 		// EndScene is the 43rd entry in the vftable (index 42)
@@ -40,7 +40,7 @@ namespace dx
 		Patch(deviceVtable[16], ResetOriginalBytes, RESET_PATCH_BYTECOUNT);
 	}
 
-	bool CopyVtable(HWND window)
+	bool CopyVtable()
 	{
 		IDirect3D9* d3d = Direct3DCreate9(D3D_SDK_VERSION);
 		if (!d3d) return false;
@@ -53,7 +53,7 @@ namespace dx
 		IDirect3DDevice9* dummyDevice = nullptr;
 
 		HRESULT createdDummyDevice = d3d->CreateDevice(D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL,
-			window, D3DCREATE_SOFTWARE_VERTEXPROCESSING,
+			params.hDeviceWindow, D3DCREATE_SOFTWARE_VERTEXPROCESSING,
 			&params, &dummyDevice);
 
 		if (createdDummyDevice != S_OK)
@@ -61,7 +61,7 @@ namespace dx
 			// try again, but windowed
 			params.Windowed = true;
 			createdDummyDevice = d3d->CreateDevice(D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL,
-				window, D3DCREATE_SOFTWARE_VERTEXPROCESSING,
+				params.hDeviceWindow, D3DCREATE_SOFTWARE_VERTEXPROCESSING,
 				&params, &dummyDevice);
 			if (createdDummyDevice != S_OK)
 			{

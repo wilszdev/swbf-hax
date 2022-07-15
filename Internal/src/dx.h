@@ -13,7 +13,7 @@ namespace dx
 	typedef RESET(Reset_fn);
 	RESET(hkDirectX_Reset);
 
-	bool CopyVtable(HWND window);
-	bool CreateHooks(HWND window);
+	bool CopyVtable();
+	bool CreateHooks();
 	void RemoveHooks();
 }

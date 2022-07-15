@@ -702,7 +702,7 @@ static void WINAPI InjectedThread(HMODULE module)
 		printf("window text: %s\n", buffer);
 	}
 
-	bool hooksSuccess = dx::CreateHooks(window) && di::CreateHooks();
+	bool hooksSuccess = dx::CreateHooks() && di::CreateHooks();
 
 	if (!hooksSuccess)
 	{
