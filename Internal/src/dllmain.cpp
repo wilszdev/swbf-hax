@@ -44,12 +44,12 @@ struct shellcode_info
 
 DWORD WINAPI uninject_shellcode(shellcode_info* param)
 {
-	((void(*)(DWORD ms))param->Sleep)(1000);
-	HMODULE module = ((HMODULE(*)(LPCSTR moduleName))param->GetModuleHandleA)("Internal.dll");
+	((void(WINAPI *)(DWORD ms))param->Sleep)(1000);
+	HMODULE module = ((HMODULE(WINAPI *)(LPCSTR moduleName))param->GetModuleHandleA)("Internal.dll");
 	if (module && module != INVALID_HANDLE_VALUE)
 	{
-		((BOOL(*)(HMODULE m))param->FreeLibary)(module);
-		((BOOL(*)(HANDLE h))param->CloseHandle)(module);
+		((BOOL(WINAPI *)(HMODULE m))param->FreeLibary)(module);
+		((BOOL(WINAPI *)(HANDLE h))param->CloseHandle)(module);
 	}
 	return 0;
 }
