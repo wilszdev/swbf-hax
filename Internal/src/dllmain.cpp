@@ -357,15 +357,22 @@ void hkDirectX_EndScene(LPDIRECT3DDEVICE9 device)
 
 	bool shouldShutdownHax = false;
 
+	if (initialised)
+	{
+		auto& io = ImGui::GetIO();
+		io.MouseDrawCursor = showImGuiMenu;
+		ShowCursor(showImGuiMenu);
+	}
+
 	if (showImGuiMenu)
 	{
 #pragma region cursor
-		auto& io = ImGui::GetIO();
 
 		// use the position of the in game cursor, bc it locks to the window for us and stuff like that.
 		RECT clientRect = { 0 };
 		GetClientRect(windowHandle, &clientRect);
 
+		auto& io = ImGui::GetIO();
 		// for some odd reason, (1024, 624) is the bottom left position for the in-game cursor.
 		// it is independent of resolution or window size.
 		io.MousePos.x = ((float)(*(int*)(exeBase + 0x7027C4))) / 1024.0f * (float)clientRect.right;
