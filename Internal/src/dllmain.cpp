@@ -271,10 +271,20 @@ static bool DrawTeamEsp(LPDIRECT3DDEVICE9 device, size_t teamIndex, uint32_t col
 void hkDirectX_EndScene(LPDIRECT3DDEVICE9 device)
 {
 	static bool initialised = false;
-	static HWND windowHandle = util::GetCurrentProcessWindow();
+	static HWND windowHandle = 0;
 	if (!exeBase) exeBase = (uintptr_t)GetModuleHandleA(NULL);
 	if (!initialised)
 	{
+		D3DDEVICE_CREATION_PARAMETERS params = {};
+		if (SUCCEEDED(device->GetCreationParameters(&params)))
+		{
+			windowHandle = params.hFocusWindow;
+		}
+		else
+		{
+			windowHandle = util::GetCurrentProcessWindow();
+		}
+
 		InitImGui(device, windowHandle);
 		initialised = true;
 	}
